@@ -25,6 +25,7 @@ void main(){
  if(mat==7){albedo=sampleMap(3,uv);bumpLayer=3;bumpScale=1.2;rough=.9;}            // brick
  if(mat==8){albedo=sampleMap(5,uv);bumpLayer=5;bumpScale=1.5;rough=.45;metal=.5;}  // steel
  if(mat==18){albedo=sampleMap(23,uv);bumpLayer=23;bumpScale=1.35;rough=.92;}       // board-form concrete (layer 8+15)
+ if(mat==19){albedo=sampleMap(0,uv)*vec3(.72,.69,.64);bumpLayer=0;bumpScale=1.4;rough=.98;} // exposed aggregate
  if(mat==10){outColor=vec4(.910,.314,.110,.35);return;}                             // ghost 0xe8501c
  if(mat==11){albedo=vec3(.467,.475,.467);rough=1.;}                                 // ground 0x777977
  if(mat==12){ // plot: concrete map * 0xcfcdc5, bumpScale .5, grid opacity .25

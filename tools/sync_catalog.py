@@ -26,13 +26,14 @@ def main() -> None:
         f"constexpr int PieceCount={piece_count},CategoryCount={category_count},PieceEncodingStride=64;",
         "const char* names[]={" + ",".join(f'"{n}"' for n in names) + "};",
         "const char* cats[]={" + ",".join(f'"{c[0]}"' for c in cat_blocks) + "};",
-        "const int catTypes[CategoryCount][10]={",
+        "constexpr int CategorySlots=12;",
+        "const int catTypes[CategoryCount][CategorySlots]={",
     ]
     for _, ids in cat_blocks:
         nums = [int(x) for x in ids.split(",") if x.strip()]
-        while len(nums) < 10:
+        while len(nums) < 12:
             nums.append(-1)
-        lines.append("{" + ",".join(str(n) for n in nums[:10]) + "},")
+        lines.append("{" + ",".join(str(n) for n in nums[:12]) + "},")
     lines.append("};")
     lines.append('static_assert(PieceCount<=PieceEncodingStride,"GPU piece encoding must fit all types");')
     OUT.write_text("\n".join(lines) + "\n", encoding="utf-8")

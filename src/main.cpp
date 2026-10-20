@@ -10,6 +10,7 @@
 #include <algorithm>
 #include <string>
 #include <cstdlib>
+#include <unordered_set>
 #include "shaders.h"
 
 constexpr int MaxPlot=32,WorldHeight=20,WorldCells=MaxPlot*MaxPlot*WorldHeight;
@@ -26,6 +27,20 @@ World world;std::vector<World> history;
 int idx(int x,int y,int z){return x*(MaxPlot*WorldHeight)+z*WorldHeight+y;} bool inb(int x,int y,int z){return x>=0&&z>=0&&y>=0&&x<world.n&&z<world.n&&y<20;}
 Cell get(int x,int y,int z){return inb(x,y,z)?world.c[idx(x,y,z)]:Cell{};}
 void put(int x,int y,int z,int t,int r=0){if(inb(x,y,z))world.c[idx(x,y,z)]={(int8_t)t,(int8_t)r};}
+int footprintW(int t){return (t==23||t==51||t==57||t==58||t==59)?2:1;}
+int footprintD(int t){return t==58?2:1;}
+int footprintH(int t){return (t==23||t==51||t==56||t==58||t==59||t==60)?2:1;}
+template<class Fn>void eachFootprintCell(int x,int y,int z,int t,int r,Fn&& fn){
+ int w=footprintW(t),d=footprintD(t),h=footprintH(t);for(int ly=0;ly<h;ly++)for(int lz=0;lz<d;lz++)for(int lx=0;lx<w;lx++){int dx=lx,dz=lz;for(int i=0;i<r;i++){int nx=-dz;dz=dx;dx=nx;}fn(x+dx,y+ly,z+dz);}}
+bool footprintCovers(int ax,int ay,int az,int t,int r,int x,int y,int z){bool hit=false;eachFootprintCell(ax,ay,az,t,r,[&](int cx,int cy,int cz){if(cx==x&&cy==y&&cz==z)hit=true;});return hit;}
+bool footprintRoot(int x,int y,int z,int& ox,int& oy,int& oz){
+ if(get(x,y,z).t>=0){ox=x;oy=y;oz=z;return true;}
+ for(int ay=std::max(0,y-1);ay<=y;ay++)for(int ax=x-1;ax<=x+1;ax++)for(int az=z-1;az<=z+1;az++){
+  if(!inb(ax,ay,az))continue;auto c=get(ax,ay,az);if(c.t<0||(footprintW(c.t)<=1&&footprintH(c.t)<=1&&footprintD(c.t)<=1))continue;
+  if(footprintCovers(ax,ay,az,c.t,c.r,x,y,z)){ox=ax;oy=ay;oz=az;return true;}}
+ return false;}
+bool cellBlocked(int x,int y,int z){if(get(x,y,z).t>=0)return true;int ox,oy,oz;return footprintRoot(x,y,z,ox,oy,oz);}
+bool canPlace(int x,int y,int z,int t,int r=0){bool ok=true;eachFootprintCell(x,y,z,t,r,[&](int cx,int cy,int cz){if(!inb(cx,cy,cz)||cellBlocked(cx,cy,cz))ok=false;});return ok;}
 void remember(){if(history.size()>=80)history.erase(history.begin());history.push_back(world);}
 std::wstring dataPath,logPath;FILE* logFile=nullptr;
 void log(const char* s){if(logFile){fprintf(logFile,"%s\n",s);fflush(logFile);}}
@@ -63,13 +78,21 @@ bool load(){FILE* f=nullptr;_wfopen_s(&f,dataPath.c_str(),L"rb");if(!f)return fa
 }
 #include "saves.inc"
 void starter(){world=World{};world.n=10;world.pipes.clear();
- // Brutalist L-corridor: board-form walls, chase, cantilever, waffle, pipes
+ // Brutalist L-corridor + wave-2 megastructure accents
  for(int z=1;z<=6;z++){for(int y=0;y<4;y++){put(1,y,z,47);put(4,y,z,47);}put(2,0,z,47);put(3,0,z,47);put(2,3,z,48,2);put(3,3,z,48,2);}
  for(int x=1;x<=7;x++){for(int y=0;y<4;y++){put(x,y,7,47,1);if(x>=5)put(x,y,4,47,3);}put(x,0,5,47);put(x,0,6,47);if(x>=2&&x<=6)put(x,3,6,50);}
  for(int y=0;y<4;y++)put(1,y,4,54);
  put(1,0,2,55);put(4,3,3,52);put(2,0,1,53);put(3,0,1,53);
- for(int y=1;y<3;y++)put(7,y,5,47,1);put(7,0,5,51,1);put(7,3,5,48,1);
+ put(7,0,5,51,1);put(7,0,6,-1);put(7,1,5,-1);put(7,1,6,-1);put(7,2,5,47,1);put(7,3,5,48,1); // portal 2×2 (r=1 spans +Z)
  put(2,0,3,5);put(3,0,5,5);put(5,0,6,5);put(6,1,6,14);put(0,0,3,17);
+ put(8,0,4,56);put(8,1,4,-1); // pilotis
+ put(0,0,6,57);put(1,0,6,-1); // megastep
+ put(2,1,2,-1);put(3,1,2,-1);put(2,1,3,-1);put(3,1,3,-1);put(2,2,2,-1);put(3,2,2,-1);put(2,2,3,-1);put(3,2,3,-1);
+ put(2,1,2,58); // lightwell 2×2×2
+ put(5,2,5,59);put(6,2,5,-1);put(5,3,5,-1);put(6,3,5,-1); // bridge 2×2 walk tunnel
+ put(8,0,7,60);put(8,1,7,-1); // tower core
+ put(6,0,4,61); // aggregate
+ put(2,2,4,62);put(3,2,4,62); // corbels
  world.pipes={{1,1,3,0,1,1,0,0,0},{1,2,3,0,1,1,0,0,0},{1,2,3,0,1,0,0,0,0},{1,2,3,0,1,2,1,1,1},{1,0,3,0,1,0,3,0,0}};
  mood=4;sunHeight=26;sunAngle=150;fog=.52f;moodSat=0;}
 
@@ -129,7 +152,8 @@ case 17:case 24:box(1,.5,.1,0,-.25,-.45);box(1,.5,.1,0,-.25,.45);box(.1,.5,.8,-.
 case 18:box(1,1,1,0,0,0,7);break;case 19:box(1,1,1,0,0,0,5);break;case 20:box(1,1,1,0,0,0,8);break;
 case 21:for(int i=0;i<5;i++)box(.08,1,.5,-.4f+i*.2f,0,-.2);break;
 case 22:for(int i=0;i<5;i++){box(.08,1,.25,-.4f+i*.2f);box(1,.08,.25,0,-.4f+i*.2f);}break;
-case 23:box(.18,1,.3,-.41);box(.18,1,.3,.41);box(.64,.15,.3,0,.425);break;
+case 23: // 2×2 doorway — jambs deepened toward interior (-Z)
+ box(.3,2,.55,-.35,.5,-.15);box(.3,2,.55,1.35,.5,-.15);box(1.4,.18,.55,.5,1.41,-.15);break;
 case 25:box(.06,1,.06,-.25,0,-.44,3);box(.06,1,.06,.25,0,-.44,3);for(int i=0;i<4;i++)box(.5,.04,.04,0,-.4f+i*.25f,-.44,3);break;
 case 26:cylinder(.1,.6,-.2,3);cylinder(.09,.12,.17,4);break;
 case 27:box(.2,.08,.06,0,.3,-.46,3);box(.2,.08,.06,0,-.3,-.46,3);box(.04,.6,.04,0,0,-.46,3);box(.1,.5,.1,0,0,-.4,4);break;
@@ -137,6 +161,7 @@ case 27:box(.2,.08,.06,0,.3,-.46,3);box(.2,.08,.06,0,-.3,-.46,3);box(.04,.6,.04,
 }}
 
 #include "thumbnails.inc"
+#include "moss_nets.inc"
 
 VkInstance instance;VkPhysicalDevice physical;VkDevice device;VkSurfaceKHR surface;VkQueue queue;uint32_t family;
 VkSwapchainKHR swapchain;VkFormat swapFormat;VkExtent2D extent;std::vector<VkImage> images;std::vector<VkImageView> views;std::vector<VkFramebuffer> framebuffers;
@@ -232,14 +257,18 @@ for(auto& l:gpu.lamps)l={0,0,0,0};int lamp=0;
 for(int x=0;x<MaxPlot;x++)for(int z=0;z<MaxPlot;z++)for(int y=0;y<20;y++){auto c=get(x,y,z);gpu.cells[idx(x,y,z)]=c.t<0?0:1+c.t+PieceEncodingStride*c.r;if(c.t<0)continue;pieces++;int neighbors=0;for(V o:{V{1,0,0},V{-1,0,0},V{0,1,0},V{0,-1,0},V{0,0,1},V{0,0,-1}})if(get(x+(int)o.x,y+(int)o.y,z+(int)o.z).t>=0)neighbors++;
 bool roof=get(x,y+1,z).t>=0;
 ambient=std::max(.45f,(1.f-neighbors*.085f-(y==0?.06f:0.f)-(roof?.05f:0.f))*(.94f+((x*73+y*31+z*17)%11)/11.f*.12f));
-origin={x+.5f,y+.5f,z+.5f};turn=c.r;piece(c.t);if((c.t==13||c.t==26||c.t==27||c.t==37)&&lamp<8){V emitter=lampEmitter(c.t);gpu.lamps[lamp++]={emitter.x,emitter.y,emitter.z,1};}
-if((c.t==5||c.t==17)&&!roof)natureUnderstory(c.t==5?.51f:-.07f,c.t==17);
+origin={x+.5f,y+.5f,z+.5f};turn=c.r;
+if(c.t==5){if(!roof)natureUnderstory(.51f,false);continue;} // moss mesh from surface nets
+piece(c.t);if((c.t==13||c.t==26||c.t==27||c.t==37)&&lamp<8){V emitter=lampEmitter(c.t);gpu.lamps[lamp++]={emitter.x,emitter.y,emitter.z,1};}
+if(c.t==17&&!roof)natureUnderstory(-.07f,true);
 }
-bakeNatureMask=false;origin={};turn=0;ambient=1;renderPipes();vertices.insert(vertices.end(),transparent.begin(),transparent.end());transparent.clear();
+bakeNatureMask=false;origin={};turn=0;ambient=1;emitMossSurfaceNets();
+renderPipes();vertices.insert(vertices.end(),transparent.begin(),transparent.end());transparent.clear();
 std::vector<Vertex> waterVertices;size_t kept=0;for(size_t i=0;i+2<vertices.size();i+=3){if(vertices[i].m==9)waterVertices.insert(waterVertices.end(),vertices.begin()+i,vertices.begin()+i+3);else for(int j=0;j<3;j++)vertices[kept++]=vertices[i+j];}vertices.resize(kept);waterVertexCount=(uint32_t)waterVertices.size();vertices.insert(vertices.end(),waterVertices.begin(),waterVertices.end());
 buildFoliageTrace();staticCount=(uint32_t)vertices.size();if(vertices.size()*sizeof(Vertex)>maxVertexBytes-1024*1024)fail("Geometry capacity exceeded");memcpy(vertexMap,vertices.data(),vertices.size()*sizeof(Vertex));dirty=false;if(topPanel)InvalidateRect(topPanel,nullptr,FALSE);if(dockPanel)InvalidateRect(dockPanel,nullptr,FALSE);}
-bool solidAt(V p){int x=(int)floorf(p.x),y=(int)floorf(p.y),z=(int)floorf(p.z);auto c=get(x,y,z);if(c.t<0)return false;V f={p.x-x,p.y-y,p.z-z};V d={f.x-.5f,f.y,f.z-.5f};for(int i=0;i<c.r;i++)d={-d.z,d.y,d.x};f={d.x+.5f,d.y,d.z+.5f};
-switch(c.t){case 1:return f.y<.5;case 2:case 7:case 14:case 41:case 42:return fabsf(f.x-.5f)<.2f&&fabsf(f.z-.5f)<.2f;case 43:case 44:case 45:case 46:return false;case 4:return f.y<1-f.z;case 6:return f.y<ceilf((1-f.z)*4)/4;case 8:return fabsf(f.z-.5f)<.15f&&!(f.x>.15&&f.x<.85&&f.y>.25&&f.y<.8);case 9:return fabsf(f.z-.5f)<.15f;case 10:return !(fabsf(f.x-.5f)<.25f&&(f.y<.5f||(f.x-.5f)*(f.x-.5f)+(f.y-.5f)*(f.y-.5f)<.0625f));case 11:return f.z<.15;case 12:return f.y>.7&&fabsf(f.z-.5f)<.15;case 13:case 15:case 16:case 25:case 27:return false;case 17:return f.y<.5;case 21:return fabsf(f.z-.5f)<.25;case 22:return fabsf(f.z-.5f)<.15;case 23:return fabsf(f.z-.5f)<.15&&!(f.x>.18&&f.x<.82&&f.y<.85);case 24:return f.y<.1||(f.y<.5&&std::max(fabsf(f.x-.5f),fabsf(f.z-.5f))>.4);case 26:return fabsf(f.x-.5f)<.12&&fabsf(f.z-.5f)<.12&&f.y<.8;
+bool solidAt(V p){int x=(int)floorf(p.x),y=(int)floorf(p.y),z=(int)floorf(p.z);int bx,by,bz;if(!footprintRoot(x,y,z,bx,by,bz))return false;auto c=get(bx,by,bz);V f={p.x-bx,p.y-by,p.z-bz};V d={f.x-.5f,f.y,f.z-.5f};for(int i=0;i<c.r;i++)d={-d.z,d.y,d.x};f={d.x+.5f,d.y,d.z+.5f};
+switch(c.t){case 1:return f.y<.5;case 2:case 7:case 14:case 41:case 42:return fabsf(f.x-.5f)<.2f&&fabsf(f.z-.5f)<.2f;case 43:case 44:case 45:case 46:return false;case 4:return f.y<1-f.z;case 6:return f.y<ceilf((1-f.z)*4)/4;case 8:return fabsf(f.z-.5f)<.15f&&!(f.x>.15&&f.x<.85&&f.y>.25&&f.y<.8);case 9:return fabsf(f.z-.5f)<.15f;case 10:return !(fabsf(f.x-.5f)<.25f&&(f.y<.5f||(f.x-.5f)*(f.x-.5f)+(f.y-.5f)*(f.y-.5f)<.0625f));case 11:return f.z<.15;case 12:return f.y>.7&&fabsf(f.z-.5f)<.15;case 13:case 15:case 16:case 25:case 27:return false;case 17:return f.y<.5;case 21:return fabsf(f.z-.5f)<.25;case 22:return fabsf(f.z-.5f)<.15;case 23:return f.z>.02f&&f.z<.72f&&!(f.x>.3f&&f.x<1.7f&&f.y<1.82f); // deep interior-biased collider
+case 24:return f.y<.1||(f.y<.5&&std::max(fabsf(f.x-.5f),fabsf(f.z-.5f))>.4);case 26:return fabsf(f.x-.5f)<.12&&fabsf(f.z-.5f)<.12&&f.y<.8;
 case 28:return (f.x-.5f)*(f.x-.5f)+(f.z-.5f)*(f.z-.5f)+f.y*f.y<.25f;
 case 29:return (f.x-.5f)*(f.x-.5f)+(f.z-.5f)*(f.z-.5f)<.25f;
 case 30:return f.y<.5f+sqrtf(std::max(0.f,.25f-(f.x-.5f)*(f.x-.5f)));
@@ -249,14 +278,20 @@ case 36:return f.y<ceilf((1-f.z)*8)/8;
 case 38:return fabsf(f.x-.5f)<.2f&&fabsf(f.z-.5f)<.2f;
 case 39:return f.y<.35f&&fabsf(f.z-.5f)<.2f&&fabsf(f.x-.5f)<.45f;
 case 48:return f.y>.72f;case 49:return f.z<.55f-.28f*f.y;case 50:return f.y>.86f;
-case 51:return fabsf(f.z-.5f)<.275f&&!(f.x>.22f&&f.x<.78f&&f.y<.82f);
+case 51:return f.z>-.05f&&f.z<.7f&&!(f.x>.32f&&f.x<1.68f&&f.y<1.8f);
 case 52:return fabsf(f.z-.5f)<.175f&&!(f.x>.1f&&f.x<.9f&&f.y>.55f&&f.y<.85f);
 case 53:return f.y<.22f;case 54:return f.z<.18f||fabsf(f.x-.5f)>.32f;case 55:return f.y>.65f&&fabsf(f.z-.5f)<.35f;
+case 56:return f.y>1.66f&&fabsf(f.x-.5f)<.28f&&fabsf(f.z-.5f)<.28f;
+case 57:return f.y<.5f;
+case 58:return f.x<.18f||f.x>1.82f||f.z<.18f||f.z>1.82f;
+case 59:return f.y<.12f||fabsf(f.z-.5f)>.38f||f.y>1.85f; // standing clearance inside tunnel
+case 60:return fabsf(f.x-.5f)>.36f||f.z>.86f||f.y>1.85f; // walk-in shaft for 1.6m player
+case 62:return f.y>.05f&&f.z<.55f-.35f*f.y&&fabsf(f.x-.5f)<.3f;
 default:return true;}}
 bool freeAt(V p,float h){for(V o:{V{0,0,0},V{.28,0,0},V{-.28,0,0},V{0,0,.28},V{0,0,-.28}})for(float y:{.05f,h*.5f,h-.05f})if(solidAt(p+o+V{0,y,0}))return false;return true;}
 // HTML wallDir — adjacent blocked cell while airborne
 bool wallDir(float h,float& ox,float& oz){for(V o:{V{.45f,0,0},V{-.45f,0,0},V{0,0,.45f},V{0,0,-.45f}})if(!freeAt(player+o+V{0,.6f,0},h)){ox=o.x;oz=o.z;return true;}return false;}
-void playerStep(float dt){V audioBefore=player;bool audioGrounded=grounded;float audioFall=velY;float h=keys['C']||keys[VK_CONTROL]?1.1f:1.8f;if(keys['Q'])yaw+=dt*1.8f;if(keys['E'])yaw-=dt*1.8f;
+void playerStep(float dt){V audioBefore=player;bool audioGrounded=grounded;float audioFall=velY;float h=keys['C']||keys[VK_CONTROL]?1.0f:1.6f;if(keys['Q'])yaw+=dt*1.8f;if(keys['E'])yaw-=dt*1.8f;
 float f=(keys['W']||keys[VK_UP]?1.f:0)-(keys['S']||keys[VK_DOWN]?1.f:0),s=(keys['D']||keys[VK_RIGHT]?1.f:0)-(keys['A']||keys[VK_LEFT]?1.f:0);
 float L=sqrtf(f*f+s*s);if(L<1e-4f)L=1;float sp=(keys['C']||keys[VK_CONTROL]?2.f:keys[VK_SHIFT]?7.5f:4.2f)*dt/L;
 float sn=sinf(yaw),cs=cosf(yaw);float dx=(-sn*f+cs*s)*sp+hx*dt,dz=(-cs*f-sn*s)*sp+hz*dt;hx*=1-4*dt;hz*=1-4*dt;
@@ -282,13 +317,13 @@ rightv=norm(cross(forward,{0,1,0}));upv=cross(rightv,forward);
 if(walk&&fabsf(camRoll)>.0001f){float cr=cosf(camRoll),sr=sinf(camRoll);V nr=rightv*cr+upv*sr,nu=upv*cr-rightv*sr;rightv=nr;upv=nu;}
 float aspect=extent.width/(float)extent.height,f=1/tanf((walk?fieldOfView:60.f)*PI/360),A=300.f/(300.f-.1f),B=-.1f*A;
 V rows[]={rightv*(f/aspect),upv*(-f),forward*A,forward};float offsets[]={-dot(rows[0],eye),-dot(rows[1],eye),B-dot(rows[2],eye),-dot(forward,eye)};for(int r=0;r<4;r++){gpu.vp[r]=rows[r].x;gpu.vp[4+r]=rows[r].y;gpu.vp[8+r]=rows[r].z;gpu.vp[12+r]=offsets[r];}}
-void pick(){hit=hasAdd=hasRem=false;if(walk)return;float f=tanf(PI/6),a=extent.width/(float)extent.height;V d=norm(forward+rightv*((mouseX/(float)vw*2-1)*f*a)+upv*((1-mouseY/(float)vh*2)*f));V prev{-999,-999,-999};for(float t=.1;t<120;t+=.035f){V p=eye+d*t,q{floorf(p.x),floorf(p.y),floorf(p.z)};if(q.x==prev.x&&q.y==prev.y&&q.z==prev.z)continue;if(q.y<0){if(inb((int)prev.x,(int)prev.y,(int)prev.z)){hit=hasAdd=true;hitAdd=prev;hitPoint=p;}return;}int ix=(int)q.x,iy=(int)q.y,iz=(int)q.z;if(get(ix,iy,iz).t>=0&&!(drag&&placed[idx(ix,iy,iz)])){hit=hasRem=true;hitRem=q;hitPoint=p;hasAdd=inb((int)prev.x,(int)prev.y,(int)prev.z);hitAdd=prev;return;}prev=q;}}
+void pick(){hit=hasAdd=hasRem=false;if(walk)return;float f=tanf(PI/6),a=extent.width/(float)extent.height;V d=norm(forward+rightv*((mouseX/(float)vw*2-1)*f*a)+upv*((1-mouseY/(float)vh*2)*f));V prev{-999,-999,-999};for(float t=.1;t<120;t+=.035f){V p=eye+d*t,q{floorf(p.x),floorf(p.y),floorf(p.z)};if(q.x==prev.x&&q.y==prev.y&&q.z==prev.z)continue;if(q.y<0){if(inb((int)prev.x,(int)prev.y,(int)prev.z)){hit=hasAdd=true;hitAdd=prev;hitPoint=p;}return;}int ix=(int)q.x,iy=(int)q.y,iz=(int)q.z,ox,oy,oz;if(footprintRoot(ix,iy,iz,ox,oy,oz)&&!(drag&&placed[idx(ox,oy,oz)])){hit=hasRem=true;hitRem={(float)ox,(float)oy,(float)oz};hitPoint=p;hasAdd=inb((int)prev.x,(int)prev.y,(int)prev.z);hitAdd=prev;return;}prev=q;}}
 V anchor(){if(hasRem&&hasAdd)return (hitAdd+hitRem)*.5f+V{.5,.5,.5};if(hasRem)return hitRem+V{.5,1,.5};return hitAdd+V{.5,.05,.5};}
 void autoFacing(int& t,int& r){if(hasRem&&hasAdd){V d=hitRem-hitAdd;if(d.x||d.z){if(t==13)t=27;if(t==15||t==25||t==27)r=d.x<0?1:d.x>0?3:d.z>0?2:0;}}}
 void edit(){if(!hit)return;bool remove=keys[VK_SHIFT]||keys['X']||erasing;if(selected==16){V a=anchor();if(remove){int best=-1;float bd=1.3;for(int i=0;i<(int)world.cables.size();i++){float d=std::min(len(world.cables[i].a-a),len(world.cables[i].b-a));if(d<bd){bd=d;best=i;}}if(best>=0){world.cables.erase(world.cables.begin()+best);audioEdit(true,16,a);dirty=true;save();}}else if(!pendingCable){anchorA=a;pendingCable=true;audioEvent(A_click);}else{if(len(a-anchorA)>.4&&world.cables.size()<2048){world.cables.push_back({anchorA,a});audioEdit(false,16,a);dirty=true;save();}pendingCable=false;}return;}
 if(isPipeTool(selected)){pipeEdit();return;}
-if(remove&&hasRem){audioEdit(true,get((int)hitRem.x,(int)hitRem.y,(int)hitRem.z).t,hitRem+V{.5f,.5f,.5f});put((int)hitRem.x,(int)hitRem.y,(int)hitRem.z,-1);dirty=true;save();}else if(!remove&&hasAdd&&get((int)hitAdd.x,(int)hitAdd.y,(int)hitAdd.z).t<0){int t=selected,r=rotation;autoFacing(t,r);audioEdit(false,t,hitAdd+V{.5f,.5f,.5f});put((int)hitAdd.x,(int)hitAdd.y,(int)hitAdd.z,t,r);placed[idx((int)hitAdd.x,(int)hitAdd.y,(int)hitAdd.z)]=true;dirty=true;save();}}
-void toggleWalk(){walk=!walk;pendingCable=false;drag=false;ReleaseCapture();if(walk){player=hasNamedWalkSpawn&&freeAt(namedWalkSpawn,1.8f)?namedWalkSpawn:V{world.n/2.f,0,world.n+1.8f};velY=hx=hz=wallRun=camRoll=0;yaw=pitch=0;grounded=true;spaceHeld=false;}InvalidateRect(mainWindow,nullptr,FALSE);}
+if(remove&&hasRem){audioEdit(true,get((int)hitRem.x,(int)hitRem.y,(int)hitRem.z).t,hitRem+V{.5f,.5f,.5f});put((int)hitRem.x,(int)hitRem.y,(int)hitRem.z,-1);dirty=true;save();}else if(!remove&&hasAdd){int t=selected,r=rotation;autoFacing(t,r);int ax=(int)hitAdd.x,ay=(int)hitAdd.y,az=(int)hitAdd.z;if(canPlace(ax,ay,az,t,r)){audioEdit(false,t,hitAdd+V{.5f,.5f,.5f});put(ax,ay,az,t,r);placed[idx(ax,ay,az)]=true;dirty=true;save();}}}
+void toggleWalk(){walk=!walk;pendingCable=false;drag=false;ReleaseCapture();if(walk){player=hasNamedWalkSpawn&&freeAt(namedWalkSpawn,1.6f)?namedWalkSpawn:V{world.n/2.f,0,world.n+1.8f};velY=hx=hz=wallRun=camRoll=0;yaw=pitch=0;grounded=true;spaceHeld=false;}InvalidateRect(mainWindow,nullptr,FALSE);}
 void raisePanels();
 void dynamicGeometry(float time){vertices.clear();transparent.clear();origin={};turn=0;ambient=1;
 float wd=rain?2.f:1.f;

@@ -33,8 +33,8 @@ case 49: // battered retaining mass
 case 50: // waffle / coffered underside
  box(1,.14f,1,0,.43f);box(1,.08f,.08f,0,.34f);box(.08f,.08f,1,0,.34f);
  for(float x:{-.33f,0.f,.33f})for(float z:{-.33f,0.f,.33f})box(.28f,.1f,.28f,x,.36f,z);break;
-case 51: // deep portal
- box(.22f,1,.55f,-.39f,0,-.225f);box(.22f,1,.55f,.39f,0,-.225f);box(.78f,.18f,.55f,0,.41f,-.225f);break;
+case 51: // deep portal — 2×2, jambs recessed/thick toward interior (-Z)
+ box(.32f,2,.75f,-.34f,.5f,-.25f);box(.32f,2,.75f,1.34f,.5f,-.25f);box(1.36f,.2f,.75f,.5f,1.4f,-.25f);break;
 case 52: // clerestory band
  box(1,.55f,.35f,0,-.225f);box(.08f,.3f,.35f,-.46f,.35f);box(.08f,.3f,.35f,.46f,.35f);box(1,.08f,.35f,0,.49f);box(.84f,.22f,.04f,0,.35f,0,2);break;
 case 53:box(1,.22f,.9f,0,-.39f);break; // plinth
@@ -42,3 +42,17 @@ case 54: // service chase
  box(.18f,1,.45f,-.41f,0,-.275f);box(.18f,1,.45f,.41f,0,-.275f);box(1,1,.18f,0,0,-.41f);break;
 case 55: // rain scupper / spout
  box(.4f,.14f,.55f,0,.38f,-.1f);box(.16f,.1f,.4f,0,.3f,-.42f);box(.22f,.08f,.18f,0,.26f,-.55f);break;
+// Brutalism wave 2
+case 56: // pilotis — raised capital, walk under
+ cylinder(.26f,.34f,1.83f);box(.85f,.12f,.85f,0,1.94f);break;
+case 57: // megastep — 2-wide stair mass
+ box(2,.5f,1,.5f,-.25f);break;
+case 58: // lightwell — 2×2 plan rim, 2 tall
+ box(.18f,2,2,-.41f,.5f,.5f);box(.18f,2,2,1.41f,.5f,.5f);box(2,2,.18f,.5f,.5f,-.41f);box(2,2,.18f,.5f,.5f,1.41f);break;
+case 59: // inhabited bridge — 2-wide × 2-tall walk tunnel (fits 1.6m player)
+ box(2,.12f,1,.5f,-.44f);box(2,1.9f,.12f,.5f,.5f,-.44f);box(2,1.9f,.12f,.5f,.5f,.44f);box(2,.12f,1,.5f,1.44f);break;
+case 60: // tower core — 1×2 walk-in shaft, -Z open, fits standing player
+ box(.14f,2,1,-.43f,.5f);box(.14f,2,1,.43f,.5f);box(1,2,.14f,0,.5f,.43f);box(1,.14f,1,0,1.43f);break;
+case 61:box(1,1,1,0,0,0,19);break; // exposed aggregate
+case 62: // corbel bracket
+ box(.55f,.12f,.5f,0,.38f,-.05f);box(.4f,.12f,.4f,0,.24f);box(.26f,.12f,.3f,0,.1f,.05f);break;

@@ -10,7 +10,7 @@ void catalogSelfTest(){
   check(fabsf(lampEmitter(37).y-1.42f)<.00001f,"pendant light uses bulb height");
  }
  bool available[PieceCount]{};
- for(int c=0;c<CategoryCount;c++)for(int j=0;j<10&&catTypes[c][j]>=0;j++)available[catTypes[c][j]]=true;
+ for(int c=0;c<CategoryCount;c++)for(int j=0;j<CategorySlots&&catTypes[c][j]>=0;j++)available[catTypes[c][j]]=true;
  for(int t=0;t<PieceCount;t++){
   check(available[t],(std::string("palette includes ")+names[t]).c_str());
   for(int rot=0;rot<4;rot++){int v=1+t+PieceEncodingStride*rot;check((v-1)%PieceEncodingStride==t&&(v-1)/PieceEncodingStride==rot,"GPU type and rotation encoding");}

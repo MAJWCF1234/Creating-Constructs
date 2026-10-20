@@ -95,7 +95,7 @@ This key is shared by **HTML** (`key(x,y,z)`) and **native** (`exportWorldJson` 
 Rules:
 
 - Omit empty cells entirely.
-- `t` must be `0 … PieceCount-1` (currently **0…55**).
+- `t` must be `0 … PieceCount-1` (currently **0…62**).
 - `r` must be `0…3`.
 - Duplicate keys: last write wins (avoid duplicates).
 - Unknown top-level keys are ignored by the native JSON loader (skipped). Prefer the schema above.
@@ -160,7 +160,7 @@ Canonical names live in `src/catalog.inc` / HTML `TN` (keep them in sync via `to
 | 2 | Pillar | Slim column |
 | 3 | Glass | Transparent panel |
 | 4 | Slope | Ramp / wedge |
-| 5 | Moss | Soft floor / wall carpet |
+| 5 | Moss | Adaptive surface-nets moss — blends with moss neighbors; flattens against rigid pieces (architecture stays cubic) |
 | 6 | Stairs | 4-step run |
 | 7 | Column | Round column |
 | 8 | Window | Framed opening + glass |
@@ -178,7 +178,7 @@ Canonical names live in `src/catalog.inc` / HTML `TN` (keep them in sync via `to
 | 20 | Steel | Metal material cube |
 | 21 | Fins | Vertical fins |
 | 22 | Cobogó | Lattice screen |
-| 23 | Doorway | Flat doorway |
+| 23 | Doorway | Flat doorway — **2×2** footprint, centered (leave width+height neighbors empty) |
 | 24 | Pool | Basin / pool rim |
 | 25 | Ladder | Climbable |
 | 26 | Bollard | Path light |
@@ -206,11 +206,18 @@ Canonical names live in `src/catalog.inc` / HTML `TN` (keep them in sync via `to
 | 48 | Cantilever | Overhanging slab |
 | 49 | Batter | Sloped retaining mass |
 | 50 | Waffle | Coffered underside |
-| 51 | Portal | Deep recessed doorway |
+| 51 | Portal | Deep recessed doorway — **2×2** footprint, centered (leave width+height neighbors empty) |
 | 52 | Clerestory | High horizontal slot |
 | 53 | Plinth | Low podium / seating edge |
 | 54 | Chase | Vertical service recess |
 | 55 | Spout | Rain scupper |
+| 56 | Pilotis | Raised column capital — **1×2** tall, walk under |
+| 57 | Megastep | Oversized tread — **2×1** wide |
+| 58 | Lightwell | Open shaft rim — **2×2** plan × **2** tall |
+| 59 | Bridge | Inhabited span — **2×2** walk tunnel (standing clearance) |
+| 60 | Core | Tower shaft — **1×2** tall walk-in, opening on local −Z |
+| 61 | Aggregate | Exposed-aggregate concrete material |
+| 62 | Corbel | Stepped bracket under overhangs |
 
 **Do not** put types `16` or `43–46` in `c` for generators. Cables and pipes have their own arrays.
 
@@ -501,8 +508,10 @@ for z in range(1, 8):
     for y in range(1, 4):
         put(1, y, z, 47)
 
-# Portal + waffle ceiling
-put(1, 1, 1, 51, 2)
+# Portal (2×2) + waffle ceiling — clear the rest of the footprint
+put(1, 1, 1, 51, 0)
+for lx, ly in ((1, 0), (0, 1), (1, 1)):
+    cells.pop((1 + lx, 1 + ly, 1), None)
 put(1, 3, 3, 50)
 put(1, 3, 4, 50)
 
@@ -539,6 +548,7 @@ Load `my-world.json` via Share → paste → Load in the HTML app.
 - Cap piece count for performance (thousands are fine; tens of thousands of nature+ivy on 32² can get heavy).
 - Keep ivy (`15`) on cells that have a supporting wall behind their facing.
 - Water (`40`) is traversable; don’t surround the player with unbroken solids at eye height without openings.
+- **Multi-cell footprints** (stored at min corner; leave covered neighbors empty): Doorway/Portal **2×2** (W×H), Pilotis/Core **1×2** tall, Megastep **2×1** wide, Bridge **2×2** (W×H walk tunnel), Lightwell **2×2×2** (W×D×H). Width/depth follow rotation (`r`: local +X / +Z). Walk-through pieces clear **≥1.6 m** standing height.
 
 ---
 

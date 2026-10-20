@@ -1,6 +1,11 @@
-bool atmosphereExpanded=true,worldExpanded=false,audioExpanded=false;int uiModal=0,hoveredAction=-1,sliderActive=-1;
+bool atmosphereExpanded=true,worldExpanded=false,audioExpanded=false;int uiModal=0,hoveredAction=-1,sliderActive=-1,dockScrollX=0;
 RECT sliderBounds{};void showUiModal(int mode);void openShare();
-int uiDockWidth(){return std::min(760,W-32);}int uiDockHeight(){return 138;}
+int uiDockWidth(){return std::min(840,W-32);}
+int uiDockPieceCount(){int n=0;while(n<CategorySlots&&catTypes[category][n]>=0)n++;return n;}
+int uiDockHeight(){return 148;}
+int uiDockPieceStride(){return 96;}
+int uiDockMaxScroll(){int inner=uiDockWidth()-20;return std::max(0,uiDockPieceCount()*uiDockPieceStride()-inner);}
+void uiDockClampScroll(){dockScrollX=std::clamp(dockScrollX,0,uiDockMaxScroll());}
 int uiSideHeight(){return walk?64:216+(audioExpanded?169:0)+(atmosphereExpanded?268:0)+(worldExpanded?127:0);}
 void roundedBox(HDC dc,RECT r,COLORREF bg,COLORREF border,int radius=8){if(!RectVisible(dc,&r))return;HBRUSH b=CreateSolidBrush(bg);HPEN p=CreatePen(PS_SOLID,1,border);auto ob=SelectObject(dc,b),op=SelectObject(dc,p);RoundRect(dc,r.left,r.top,r.right,r.bottom,radius,radius);SelectObject(dc,ob);SelectObject(dc,op);DeleteObject(b);DeleteObject(p);}
 void glassPanel(HDC dc,RECT r){
@@ -44,10 +49,12 @@ void composeUi(HDC dc){
   section(x,y,"AUDIO",audioExpanded,28);
   if(audioExpanded){char musicLabel[80];sprintf_s(musicLabel,"Music - %s",moodMusicNames[std::clamp(mood,0,3)]);slider(musicLabel,musicVolume,304);slider("Ambience",ambienceVolume,305);slider("Effects",effectsVolume,306);button({x,y,x+190,y+28},audioMuted?"Unmute (M)":"Mute (M)",29,audioMuted);y+=40;}
  }
- if(!walk){int width=uiDockWidth(),dx=(W-width)/2,dy=H-uiDockHeight()-12,inner=width-20;glassPanel(dc,{dx,dy,dx+width,dy+uiDockHeight()});
+ if(!walk){int width=uiDockWidth(),dockH=uiDockHeight(),dx=(W-width)/2,dy=H-dockH-12,inner=width-20;glassPanel(dc,{dx,dy,dx+width,dy+dockH});
   int cw=inner/CategoryCount;for(int i=0;i<CategoryCount;i++)button({dx+10+i*cw,dy+10,dx+10+(i+1)*cw-6,dy+38},cats[i],100+i,category==i);
-  int count=0;while(count<10&&catTypes[category][count]>=0)count++;int bw=std::min(102,inner/std::max(1,count));int start=dx+(width-count*bw)/2;
-  for(int i=0;i<count;i++){int t=catTypes[category][i];RECT r{start+i*bw,dy+46,start+(i+1)*bw-6,dy+126};actions.push_back({r,200+t});if(dc&&RectVisible(dc,&r)){bool on=t==selected;roundedBox(dc,r,on?RGB(75,46,34):hoveredAction==200+t?RGB(68,68,71):RGB(43,43,46),on?accent:RGB(93,93,96));drawThumbnail(dc,(r.left+r.right-48)/2,r.top+4,t);sprintf_s(b,"%d %s",(i+1)%10,names[t]);RECT tx{r.left,r.bottom-22,r.right,r.bottom-4};SelectObject(dc,font);SetTextColor(dc,ink);SetBkMode(dc,TRANSPARENT);DrawTextA(dc,b,-1,&tx,DT_CENTER|DT_VCENTER|DT_SINGLELINE);}}
+  int count=uiDockPieceCount(),bw=uiDockPieceStride();uiDockClampScroll();
+  RECT vis{dx+10,dy+46,dx+width-10,dy+dockH-8};int saved=dc?SaveDC(dc):0;if(dc)IntersectClipRect(dc,vis.left,vis.top,vis.right,vis.bottom);
+  for(int i=0;i<count;i++){int t=catTypes[category][i],x0=dx+10-dockScrollX+i*bw;RECT r{x0,dy+46,x0+bw-6,dy+46+80};RECT hit;if(!IntersectRect(&hit,&r,&vis))continue;actions.push_back({hit,200+t});if(dc&&RectVisible(dc,&r)){bool on=t==selected;roundedBox(dc,r,on?RGB(75,46,34):hoveredAction==200+t?RGB(68,68,71):RGB(43,43,46),on?accent:RGB(93,93,96));drawThumbnail(dc,(r.left+r.right-48)/2,r.top+4,t);sprintf_s(b,"%d %s",(i+1)%10,names[t]);RECT tx{r.left,r.bottom-20,r.right,r.bottom-3};SelectObject(dc,font);SetTextColor(dc,ink);SetBkMode(dc,TRANSPARENT);DrawTextA(dc,b,-1,&tx,DT_CENTER|DT_VCENTER|DT_SINGLELINE|DT_END_ELLIPSIS);}}
+  if(dc)RestoreDC(dc,saved);
  }
  if(uiModal){int width=uiModal==2?560:620,height=uiModal==1?510:uiModal==3?560:330,mx=(W-width)/2,my=(H-height)/2;glassPanel(dc,{mx,my,mx+width,my+height});label(mx+18,my+16,uiModal==1?"Controls":uiModal==3?"Saved worlds":"Share world",fontTitle,ink);
   if(uiModal==1){const char* keysText[]={"Place","Erase","Rotate piece","Pick a piece","Switch tab","Cable","Camera","Undo","Walk mode","Parkour","Photo"};const char* help[]={"Click, or hold and drag to fill","Shift+click, hold X, or the Erase toggle","R; lights, ivy and ladders auto-face walls","1-9 within a tab; [ / ]; hold mouse and scroll","Comma and period","Click two faces; Esc cancels","Right-drag orbit, middle-drag pan, wheel zoom","Ctrl+Z","Tab; WASD, Shift run, Space jump, C crouch","Hold W against a wall; Space wall-jumps; W climbs ledges","H hides the interface; M mutes audio"};
