@@ -1,0 +1,7 @@
+Copied from: Optimum Realism R4.2.0
+  C:\Users\majwc\Downloads\Optimum Realism R4.2.0\assets\minecraft\textures\block\
+
+Wired into Creating Constructs:
+  vine.png  → texture layer 2 (ivy / vine wall, mat 6)
+  ivy.png   → texture layer 7 (tree leaf shells, mat 16; fern billboard mat 19)
+  grass/fern kept from PSX bake when O:\retro official is present

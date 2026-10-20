@@ -1,0 +1,110 @@
+[
+  {
+    "source": "O:\\retro official\\PSX Nature v1.7.3b\\PSX Nature v1.7.3b\\PSX Nature (Tree branches separated)\\Textures\\branch_1.png",
+    "sha256": "415f69783070ef51493dbf1d7bb17c94fea91d876aa71d8936d9468c76298283"
+  },
+  {
+    "source": "O:\\retro official\\PSX Nature v1.7.3b\\PSX Nature v1.7.3b\\PSX Nature (Tree branches separated)\\Textures\\tree_bark_6.png",
+    "sha256": "85f9fbae29862c3ccd30cad5bedd81fd065d50fc5db3789a859305b79a580f6e"
+  },
+  {
+    "source": "O:\\retro official\\PSX Nature v1.7.3b\\PSX Nature v1.7.3b\\PSX Nature (Tree branches separated)\\Models\\other-formats\\OBJ\\tree_5.obj",
+    "sha256": "f03d339fa21af6beb54fa02428b5ffd9b162a3665f27fa5db120df5c291b26cd"
+  },
+  {
+    "source": "O:\\retro official\\PSX Nature v1.7.3b\\PSX Nature v1.7.3b\\PSX Nature (Tree branches separated)\\Models\\other-formats\\OBJ\\tree_6.obj",
+    "sha256": "0121d2b305579b1beb0383db252c765202272c1b9c5e5757dbdc4d77b91eaa61"
+  },
+  {
+    "source": "O:\\retro official\\Nature\\psx-plants\\psx-plants_v1.0\\models\\bracken_01.glb",
+    "sha256": "4eb7793c1ca70c9c5b0cfb13c2033bdf4d1cdec3cc6993b3916d2e1a20d8d3fb"
+  },
+  {
+    "source": "O:\\retro official\\Nature\\psx-plants\\psx-plants_v1.0\\models\\grass_01_small.glb",
+    "sha256": "fc3ab4b54cb971b0cb393c66686cf0e61e8d3f5f7f78248115579b06f0ae83af"
+  },
+  {
+    "source": "O:\\retro official\\Nature\\psx-plants\\psx-plants_v1.0\\models\\tall_grass_01_small.glb",
+    "sha256": "2484bc854a0647b5811309cb98efc327ba55de843a5084f22a467d60b21ae5b5"
+  },
+  {
+    "source": "O:\\retro official\\PSX Nature v1.7.3b\\PSX Nature v1.7.3b\\PSX Nature (Tree branches separated)\\Models\\other-formats\\OBJ\\tree_7.obj",
+    "sha256": "a0111f9ad4be6e5e81cc4d6b909e3674ce15e23ab7fa5c33a2643bbb51dc4acd"
+  },
+  {
+    "source": "O:\\retro official\\PSX Nature v1.7.3b\\PSX Nature v1.7.3b\\PSX Nature (Tree branches separated)\\Models\\other-formats\\OBJ\\tree_8.obj",
+    "sha256": "a158064e3729560ec46ed6986adfe462bdc4250497ae6dbadd45e6d48130a68a"
+  },
+  {
+    "source": "O:\\retro official\\PSX Nature v1.7.3b\\PSX Nature v1.7.3b\\PSX Nature (Tree branches separated)\\Models\\other-formats\\OBJ\\tree_9.obj",
+    "sha256": "3b9d05f754e1caaff4bab3abeda05d0d4b1e248e4c7948a1d3e8629de05e047d"
+  },
+  {
+    "source": "O:\\retro official\\Nature\\psx-plants\\psx-plants_v1.0\\models\\bracken_02.glb",
+    "sha256": "2d144df6acc8eb9ed5290f322b467601e0d65efe94d197431f9c5531ad048e4e"
+  },
+  {
+    "source": "O:\\retro official\\Nature\\psx-plants\\psx-plants_v1.0\\models\\bracken_03.glb",
+    "sha256": "260976507fb8eafcc07e072070b2f10b94871ce10b48f52a84e0d60a829016f2"
+  },
+  {
+    "source": "O:\\retro official\\Nature\\psx-plants\\psx-plants_v1.0\\models\\grass_01_medium.glb",
+    "sha256": "f2ef7f52193eb113aeabb1e05f9bbd12304d198d0fbbd196a4d636af7dd633b2"
+  },
+  {
+    "source": "O:\\retro official\\Nature\\psx-plants\\psx-plants_v1.0\\models\\tall_grass_01_medium.glb",
+    "sha256": "142fa8895a600ecf1464bbe861d1cf5799b84927235aee39388c8c57418139e7"
+  },
+  {
+    "source": "O:\\retro official\\Nature\\psx-plants\\psx-plants_v1.0\\models\\dogbane_01.glb",
+    "sha256": "7793179bdb8d392aebad6de6b8597eecf6f7616758f8f80b68acfd0f10aeb159"
+  },
+  {
+    "source": "O:\\retro official\\Nature\\psx-plants\\psx-plants_v1.0\\models\\dogbane_02.glb",
+    "sha256": "dd5d0aa70218034cbe75187ebcd95d3b9d734baab1a4f6bd18731f1ec56c3289"
+  },
+  {
+    "source": "O:\\retro official\\Nature\\psx-plants\\psx-plants_v1.0\\models\\white_clover_medium.glb",
+    "sha256": "06fbec0c5803b0b3cc61b9a8d36b686240d64fae76a8a864e21204a660d3feb1"
+  },
+  {
+    "source": "O:\\retro official\\Nature\\psx-plants\\psx-plants_v1.0\\models\\savory-leaf_aster_01.glb",
+    "sha256": "45b69d82abfd27d7d489ea279f1e486a09483d16480d52c875011679113fc3bc"
+  },
+  {
+    "source": "O:\\retro official\\Nature\\psx-plants\\psx-plants_v1.0\\models\\old-field_goldenrod_01.glb",
+    "sha256": "8efdf61f7368a9ca35056efd06ff577671e9a5e8a514e34d360861fa0bfcd454"
+  },
+  {
+    "source": "O:\\retro official\\Nature\\psx-trees\\psx-trees_v1.0 - Copy\\models\\aspen_tree_01.glb",
+    "sha256": "024934bdfc385c79db980a0091b351f3fd8d5a32b043e470b96ce908c3d86580"
+  },
+  {
+    "source": "O:\\retro official\\Nature\\psx-trees\\psx-trees_v1.0 - Copy\\models\\aspen_tree_02.glb",
+    "sha256": "ee0b7e2db49a60c08590d18b19d54459c7c6c44f363be7e2537810a6d872a050"
+  },
+  {
+    "source": "O:\\retro official\\PSX Nature v1.7.3b\\PSX Nature v1.7.3b\\PSX Nature (Tree branches separated)\\Textures\\pine_bark_2.png",
+    "sha256": "d91aef5550e7d2d5d1afebd2799d461aec6ae3701645c6f363f54ebb98b1a9c4"
+  },
+  {
+    "source": "O:\\retro official\\PSX Nature v1.7.3b\\PSX Nature v1.7.3b\\PSX Nature (Tree branches separated)\\Textures\\pine_branch_3.png",
+    "sha256": "5a58f31c771993cf0e67a573fe8068fe69172d908a9c51d21316c6b7948850a8"
+  },
+  {
+    "source": "O:\\retro official\\PSX Nature v1.7.3b\\PSX Nature v1.7.3b\\PSX Nature (Tree branches separated)\\Models\\other-formats\\OBJ\\pine_tree_n_1.obj",
+    "sha256": "325a6a065e372a32e53ddc672b2de20cbd4c56c44d1f00a782dc493fcb0f39c3"
+  },
+  {
+    "source": "O:\\retro official\\PSX Nature v1.7.3b\\PSX Nature v1.7.3b\\PSX Nature (Tree branches separated)\\Textures\\pine_bark_1.png",
+    "sha256": "ba2588a039e30de86f16840b334e49ef6a9a190c4a18527333192b09e4e4bb05"
+  },
+  {
+    "source": "O:\\retro official\\PSX Nature v1.7.3b\\PSX Nature v1.7.3b\\PSX Nature (Tree branches separated)\\Textures\\pine_branch_1.png",
+    "sha256": "172c6eae0b8d46b0b9bd6950c48255092b25e6648a874f9f71f61889f1d8be65"
+  },
+  {
+    "source": "O:\\retro official\\PSX Nature v1.7.3b\\PSX Nature v1.7.3b\\PSX Nature (Tree branches separated)\\Models\\other-formats\\OBJ\\pine_tree_n_2.obj",
+    "sha256": "2da5b4589e44e9534d489f3ab8572aed9b8f66266aca19ee009a2bb89637f30a"
+  }
+]
