@@ -129,13 +129,45 @@ for x,z,r in [(7,19,1),(19,19,0),(24,25,1),(14,27,0)]:put(x,4,z,39,r)
 for x in range(26,30):put(x,4,5,10)
 for x in range(26,30):put(x,5,5,34)
 put(27,4,10,28);put(29,4,9,29);put(26,4,13,38)
+# Mixed canopy: birch and pine break up the deciduous line (showcase foliage catalog).
+for x,z in [(4,9),(3,25),(21,26),(28,22)]:put(x,4,z,41)  # birch
+for x,z in [(1,15),(10,28),(23,21),(29,11)]:put(x,4,z,42)  # pine
+# Extra ivy sheets on the east low building and courtyard lip.
+for y in range(4,7):
+ put(15,y,6,15);put(11,y,6,15)
+for x in (20,21,22):put(x,4,19,15)
+# Soft path lights along the main concrete spine and pool rim.
+for x,z in [(16,10),(16,16),(16,22),(24,16),(9,18)]:put(x,4,z,13)
+put(28,4,18,27);put(12,4,21,26)
+# Face-mounted pipe run on the west test-block south facade (Share JSON / HTML).
+# face 4 = +Z exterior; valve + gauge showcase the pipe kit.
+pipes=[]
+wx,wz,face=10,5,4  # mid south face of west block after +8 expand
+for cy,u,v,kind,rot in [
+ (4,1,0,'pipe',0),(4,1,1,'pipe',0),(4,1,2,'pipe',0),
+ (5,1,0,'pipe',0),(5,1,1,'valve',1),(5,1,2,'pipe',0),
+ (6,1,0,'pipe',0),(6,1,1,'gauge',1),(6,1,2,'pipe',0),
+ (5,0,1,'pipe',0),(5,2,1,'pipe',0),
+]:
+ pipes.append({'cx':wx,'cy':cy,'cz':wz,'face':face,'u':u,'v':v,'kind':kind,'rot':rot,'auto':kind in ('valve','gauge')})
 name='Overgrown Construct' 
 raw=bytearray([-1 & 255,0])*20480
 for (x,y,z),(t,r) in cells.items():struct.pack_into('bb',raw,(x*640+z*20+y)*2,t,r)
 # SavedView is 2 vec3s, 11 scalar floats, mood int and flags uint (76 bytes).
-view=struct.pack('<17fiI',16.,7.8,14.5,15.4,4.,17.4,.72,1.02,48.,0.,-.07,75.,32.,130.,1.06,.16,.08,0,12)
-assert len(view)==76
-blob=struct.pack('<I',0x32534e4d)+name.encode('utf-16le').ljust(128,b'\0')+view+struct.pack('<i',32)+raw+struct.pack('<I',len(cables))+b''.join(struct.pack('<6f',*a,*b) for a,b in cables)
-out=R/'worlds/Overgrown Construct.mns';out.write_bytes(blob)
-(R/'worlds/Overgrown Construct.json').write_text(json.dumps({'N':32,'c':[[x*1024+z*32+y,{'t':t,'r':r}] for (x,y,z),(t,r) in cells.items()],'cab':[[*a,*b] for a,b in cables]},separators=(',',':')))
-print(len(cells),'pieces;',len(blob),'bytes; SHA256',hashlib.sha256(blob).hexdigest())
+def pack_view(target,player,theta,phi,dist,yaw,pitch,fov,sun_h,sun_a,exp,fog,sat,mood,flags):
+ v=struct.pack('<17fiI',*target,*player,theta,phi,dist,yaw,pitch,fov,sun_h,sun_a,exp,fog,sat,mood,flags)
+ assert len(v)==76
+ return v
+# Play save: first-person courtyard entrance (walk + AO).
+play_view=pack_view((16.,7.8,14.5),(15.4,4.,17.4),.72,1.02,48.,0.,-.07,75.,32.,130.,1.06,.16,.08,0,12)
+# Overview save: Blue-hour orbit for itch background / marketing stills.
+overview_view=pack_view((16.,4.2,15.),(15.4,4.,17.4),.95,1.05,40.,0.,-.05,60.,8.,250.,1.05,.34,.55,3,4)
+def write_mns(path,view):
+ blob=struct.pack('<I',0x32534e4d)+name.encode('utf-16le').ljust(128,b'\0')+view+struct.pack('<i',32)+raw+struct.pack('<I',len(cables))+b''.join(struct.pack('<6f',*a,*b) for a,b in cables)
+ path.write_bytes(blob)
+ return blob
+blob=write_mns(R/'worlds/Overgrown Construct.mns',play_view)
+write_mns(R/'worlds/Overgrown Construct Overview.mns',overview_view)
+share={'N':32,'c':[[x*1024+z*32+y,{'t':t,'r':r}] for (x,y,z),(t,r) in cells.items()],'cab':[[*a,*b] for a,b in cables],'pipes':pipes}
+(R/'worlds/Overgrown Construct.json').write_text(json.dumps(share,separators=(',',':')))
+print(len(cells),'pieces;',len(pipes),'pipes;',len(blob),'bytes; SHA256',hashlib.sha256(blob).hexdigest())
