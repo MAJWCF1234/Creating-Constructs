@@ -21,19 +21,23 @@ def main() -> None:
         raise SystemExit("failed to parse catalog")
     piece_count = len(names)
     category_count = len(cat_blocks)
-    lines = [
-        "// Generated from Creating Constructs.html by tools/sync_catalog.py.",
-        f"constexpr int PieceCount={piece_count},CategoryCount={category_count},PieceEncodingStride=64;",
-        "const char* names[]={" + ",".join(f'"{n}"' for n in names) + "};",
-        "const char* cats[]={" + ",".join(f'"{c[0]}"' for c in cat_blocks) + "};",
-        "constexpr int CategorySlots=12;",
-        "const int catTypes[CategoryCount][CategorySlots]={",
-    ]
+    parsed = []
+    max_slots = 12
     for _, ids in cat_blocks:
         nums = [int(x) for x in ids.split(",") if x.strip()]
-        while len(nums) < 12:
-            nums.append(-1)
-        lines.append("{" + ",".join(str(n) for n in nums[:12]) + "},")
+        max_slots = max(max_slots, len(nums))
+        parsed.append(nums)
+    lines = [
+        "// Generated from Creating Constructs.html by tools/sync_catalog.py.",
+        f"constexpr int PieceCount={piece_count},CategoryCount={category_count},PieceEncodingStride=128;",
+        "const char* names[]={" + ",".join(f'"{n}"' for n in names) + "};",
+        "const char* cats[]={" + ",".join(f'"{c[0]}"' for c in cat_blocks) + "};",
+        f"constexpr int CategorySlots={max_slots};",
+        "const int catTypes[CategoryCount][CategorySlots]={",
+    ]
+    for nums in parsed:
+        padded = nums + [-1] * (max_slots - len(nums))
+        lines.append("{" + ",".join(str(n) for n in padded) + "},")
     lines.append("};")
     lines.append('static_assert(PieceCount<=PieceEncodingStride,"GPU piece encoding must fit all types");')
     OUT.write_text("\n".join(lines) + "\n", encoding="utf-8")

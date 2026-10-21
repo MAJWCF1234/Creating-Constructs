@@ -11,6 +11,7 @@
 #include <string>
 #include <cstdlib>
 #include <unordered_set>
+#include <unordered_map>
 #include "shaders.h"
 
 constexpr int MaxPlot=32,WorldHeight=20,WorldCells=MaxPlot*MaxPlot*WorldHeight;
@@ -105,7 +106,7 @@ V lampEmitter(int type){
 }
 
 V transformNormal(V p){for(int i=0;i<turn;i++)p={p.z,p.y,-p.x};return p;}
-void tri(V a,V b,V c,int m){V n=norm(cross(b-a,c-a));int mat=ghostMode?10:m;auto& v=(ghostMode||mat==2||mat==6||mat==9||mat==10||mat==14||mat==16||mat==17||mat==19)?transparent:vertices;v.push_back({transform(a),transformNormal(n),(float)mat,ambient});v.push_back({transform(b),transformNormal(n),(float)mat,ambient});v.push_back({transform(c),transformNormal(n),(float)mat,ambient});}
+void tri(V a,V b,V c,int m){V n=norm(cross(b-a,c-a));int mat=ghostMode?10:m;auto& v=(ghostMode||mat==2||mat==6||mat==9||mat==10||mat==14||mat==16||mat==17)?transparent:vertices;v.push_back({transform(a),transformNormal(n),(float)mat,ambient});v.push_back({transform(b),transformNormal(n),(float)mat,ambient});v.push_back({transform(c),transformNormal(n),(float)mat,ambient});}
 void triRaw(V a,V b,V c,V na,V nb,V nc,int m,float amb){auto& v=transparent;v.push_back({a,na,(float)m,amb});v.push_back({b,nb,(float)m,amb});v.push_back({c,nc,(float)m,amb});}
 void quadRaw(V a,V b,V c,V d,V n,int m,float amb){triRaw(a,b,c,n,n,n,m,amb);triRaw(a,c,d,n,n,n,m,amb);}
 // Crossed billboard; UV in normal.xy with V=0 at tips (texture top), V=1 at roots
@@ -148,7 +149,11 @@ case 13:box(.6,.07,.07,0,.4,0,4);box(.66,.04,.14,0,.46,0,3);break;
 case 14:natureTree();break;
 case 15:ivyGrowth();break;
 case 16:for(int i=0;i<12;i++){float a=i/12.f,b=(i+1)/12.f;tube({a-.5f,.4f-.8f*a*(1-a),0},{b-.5f,.4f-.8f*b*(1-b),0},.014,13);}break;
-case 17:case 24:box(1,.5,.1,0,-.25,-.45);box(1,.5,.1,0,-.25,.45);box(.1,.5,.8,-.45,-.25);box(.1,.5,.8,.45,-.25);box(.8,.1,.8,0,-.45);box(.8,t==17?.42f:.02f,.8,0,t==17?-.29f:-.14f,0,t==17?1:9);break;
+case 17:case 24:{ // ghost/catalog — match merged basins (top-only pool water, no side faces)
+ box(1,.5,.12,0,-.25,-.44);box(1,.5,.12,0,-.25,.44);box(.12,.5,1,-.44,-.25);box(.12,.5,1,.44,-.25);box(1,.08,1,0,-.46);
+ if(t==17)box(.64,.36,.64,0,-.30,0,1);
+ else quad({-.32f,-.18f,.32f},{.32f,-.18f,.32f},{.32f,-.18f,-.32f},{-.32f,-.18f,-.32f},9);
+ break;}
 case 18:box(1,1,1,0,0,0,7);break;case 19:box(1,1,1,0,0,0,5);break;case 20:box(1,1,1,0,0,0,8);break;
 case 21:for(int i=0;i<5;i++)box(.08,1,.5,-.4f+i*.2f,0,-.2);break;
 case 22:for(int i=0;i<5;i++){box(.08,1,.25,-.4f+i*.2f);box(1,.08,.25,0,-.4f+i*.2f);}break;
@@ -162,6 +167,7 @@ case 27:box(.2,.08,.06,0,.3,-.46,3);box(.2,.08,.06,0,-.3,-.46,3);box(.04,.6,.04,
 
 #include "thumbnails.inc"
 #include "moss_nets.inc"
+#include "basins.inc"
 
 VkInstance instance;VkPhysicalDevice physical;VkDevice device;VkSurfaceKHR surface;VkQueue queue;uint32_t family;
 VkSwapchainKHR swapchain;VkFormat swapFormat;VkExtent2D extent;std::vector<VkImage> images;std::vector<VkImageView> views;std::vector<VkFramebuffer> framebuffers;
@@ -177,8 +183,10 @@ uint32_t memoryType(uint32_t bits,VkMemoryPropertyFlags flags){VkPhysicalDeviceM
 void buffer(VkDeviceSize size,VkBufferUsageFlags usage,VkBuffer& b,VkDeviceMemory& memory,void** map){VkBufferCreateInfo ci{VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO};ci.size=size;ci.usage=usage;vkcheck(vkCreateBuffer(device,&ci,nullptr,&b),"Create buffer");VkMemoryRequirements req;vkGetBufferMemoryRequirements(device,b,&req);VkMemoryAllocateInfo ai{VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO};ai.allocationSize=req.size;ai.memoryTypeIndex=memoryType(req.memoryTypeBits,VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT|VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);vkcheck(vkAllocateMemory(device,&ai,nullptr,&memory),"Allocate buffer");vkcheck(vkBindBufferMemory(device,b,memory,0),"Bind buffer");vkcheck(vkMapMemory(device,memory,0,size,0,map),"Map buffer");}
 #include "foliage_trace.inc"
 #include "foliage_tex.inc"
+#include "topo_textures.inc"
 void uploadTextures(){
- constexpr int TextureLayers=9+NatureTextureCount;
+ // 0-7 base, 8..8+N-1 nature, 8+N boardform, then topography pack
+ constexpr int TextureLayers=9+NatureTextureCount+TopoTextureCount;
  unsigned char layers[TextureLayers][128*128*4];
  bakeConcrete(layers[0]);bakeLeaf(layers[1],false);bakeBrick(layers[3]);bakeWood(layers[4]);bakeSteel(layers[5]);
  // Optimum vine/ivy (assets/optimum → foliage_tex.inc); PSX grass; ivy replaces fern layer for leaves
@@ -186,6 +194,7 @@ void uploadTextures(){
  memcpy(layers[6],grass_rgba,sizeof(grass_rgba));
  memcpy(layers[7],ivy_rgba,sizeof(ivy_rgba));for(int i=0;i<NatureTextureCount;i++)memcpy(layers[8+i],naturePixels[i],128*128*4);
  bakeBoardForm(layers[8+NatureTextureCount]);
+ for(int i=0;i<TopoTextureCount;i++)memcpy(layers[9+NatureTextureCount+i],topoPixels[i],128*128*4);
  VkImageCreateInfo ii{VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO};ii.imageType=VK_IMAGE_TYPE_2D;ii.format=VK_FORMAT_R8G8B8A8_UNORM;ii.extent={128,128,1};ii.mipLevels=1;ii.arrayLayers=TextureLayers;ii.samples=VK_SAMPLE_COUNT_1_BIT;ii.tiling=VK_IMAGE_TILING_OPTIMAL;ii.usage=VK_IMAGE_USAGE_TRANSFER_DST_BIT|VK_IMAGE_USAGE_SAMPLED_BIT;
  vkcheck(vkCreateImage(device,&ii,nullptr,&texImage),"tex image");VkMemoryRequirements req;vkGetImageMemoryRequirements(device,texImage,&req);
  VkMemoryAllocateInfo ai{VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO};ai.allocationSize=req.size;ai.memoryTypeIndex=memoryType(req.memoryTypeBits,VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
@@ -258,12 +267,24 @@ for(int x=0;x<MaxPlot;x++)for(int z=0;z<MaxPlot;z++)for(int y=0;y<20;y++){auto c
 bool roof=get(x,y+1,z).t>=0;
 ambient=std::max(.45f,(1.f-neighbors*.085f-(y==0?.06f:0.f)-(roof?.05f:0.f))*(.94f+((x*73+y*31+z*17)%11)/11.f*.12f));
 origin={x+.5f,y+.5f,z+.5f};turn=c.r;
-if(c.t==5){if(!roof)natureUnderstory(.51f,false);continue;} // moss mesh from surface nets
+if(c.t==5){ // moss from surface nets; wet beds when water sits on/against it
+ bool wet=mossWetAt(x,y,z);if(wet)emitWetMossBed();
+ if(wet&&get(x,y+1,z).t==40)natureWaterUnderstory(.92f);
+ else if(!roof)natureUnderstory(.51f,false);
+ continue;}
+if(c.t==63||c.t==64)continue; // stone/boulder from rock nets
+if(c.t==17||c.t==24)continue; // merged planter / pool basins
 piece(c.t);if((c.t==13||c.t==26||c.t==27||c.t==37)&&lamp<8){V emitter=lampEmitter(c.t);gpu.lamps[lamp++]={emitter.x,emitter.y,emitter.z,1};}
-if(c.t==17&&!roof)natureUnderstory(-.07f,true);
+if(c.t==40&&get(x,y-1,z).t==5)natureWaterUnderstory(-.38f); // water on moss — aquatic fringe
 }
-bakeNatureMask=false;origin={};turn=0;ambient=1;emitMossSurfaceNets();
-renderPipes();vertices.insert(vertices.end(),transparent.begin(),transparent.end());transparent.clear();
+bakeNatureMask=false;origin={};turn=0;ambient=1;emitMossSurfaceNets();emitRockSurfaceNets();emitMergedBasins();
+// Planter understory after basins so soil exists; one plant cluster per planter cell
+for(int x=0;x<world.n;x++)for(int z=0;z<world.n;z++)for(int y=0;y<20;y++){
+ auto c=get(x,y,z);if(c.t!=17||get(x,y+1,z).t>=0)continue;
+ origin={x+.5f,y+.5f,z+.5f};turn=c.r;ambient=1;natureUnderstory(-.07f,true);
+}
+// Pipes use world-space centers — clear leftover basin/planter origin or they draw off-map
+origin={};turn=0;ambient=1;renderPipes();vertices.insert(vertices.end(),transparent.begin(),transparent.end());transparent.clear();
 std::vector<Vertex> waterVertices;size_t kept=0;for(size_t i=0;i+2<vertices.size();i+=3){if(vertices[i].m==9)waterVertices.insert(waterVertices.end(),vertices.begin()+i,vertices.begin()+i+3);else for(int j=0;j<3;j++)vertices[kept++]=vertices[i+j];}vertices.resize(kept);waterVertexCount=(uint32_t)waterVertices.size();vertices.insert(vertices.end(),waterVertices.begin(),waterVertices.end());
 buildFoliageTrace();staticCount=(uint32_t)vertices.size();if(vertices.size()*sizeof(Vertex)>maxVertexBytes-1024*1024)fail("Geometry capacity exceeded");memcpy(vertexMap,vertices.data(),vertices.size()*sizeof(Vertex));dirty=false;if(topPanel)InvalidateRect(topPanel,nullptr,FALSE);if(dockPanel)InvalidateRect(dockPanel,nullptr,FALSE);}
 bool solidAt(V p){int x=(int)floorf(p.x),y=(int)floorf(p.y),z=(int)floorf(p.z);int bx,by,bz;if(!footprintRoot(x,y,z,bx,by,bz))return false;auto c=get(bx,by,bz);V f={p.x-bx,p.y-by,p.z-bz};V d={f.x-.5f,f.y,f.z-.5f};for(int i=0;i<c.r;i++)d={-d.z,d.y,d.x};f={d.x+.5f,d.y,d.z+.5f};
@@ -287,6 +308,11 @@ case 58:return f.x<.18f||f.x>1.82f||f.z<.18f||f.z>1.82f;
 case 59:return f.y<.12f||fabsf(f.z-.5f)>.38f||f.y>1.85f; // standing clearance inside tunnel
 case 60:return fabsf(f.x-.5f)>.36f||f.z>.86f||f.y>1.85f; // walk-in shaft for 1.6m player
 case 62:return f.y>.05f&&f.z<.55f-.35f*f.y&&fabsf(f.x-.5f)<.3f;
+case 63:return (f.x-.5f)*(f.x-.5f)+(f.z-.5f)*(f.z-.5f)+(f.y-.5f)*(f.y-.5f)<.22f; // stone
+case 64:return (f.x-.5f)*(f.x-.5f)+(f.z-.5f)*(f.z-.5f)+(f.y-.5f)*(f.y-.5f)<.28f; // boulder
+case 65:return f.y<.42f&&fabsf(f.z-.5f)<.28f; // fallen log
+case 66:return fabsf(f.x-.5f)<.28f&&fabsf(f.z-.5f)<.28f&&f.y<.85f; // stump
+case 67:return false; // mushroom
 default:return true;}}
 bool freeAt(V p,float h){for(V o:{V{0,0,0},V{.28,0,0},V{-.28,0,0},V{0,0,.28},V{0,0,-.28}})for(float y:{.05f,h*.5f,h-.05f})if(solidAt(p+o+V{0,y,0}))return false;return true;}
 // HTML wallDir — adjacent blocked cell while airborne
@@ -338,8 +364,17 @@ for(auto& g:grass){float wx=sinf(time*2.2f+g.p.x*3.1f+g.p.z*2.3f)*.07f*g.scale,w
   triRaw(bl,br,tr,{0,1,0},{1,1,0},{1,0,0},17,1.f);triRaw(bl,tr,tl,{0,1,0},{1,0,0},{0,0,0},17,1.f);};
  cross(ca,sa);cross(-sa,ca);}
 // Emissive fixture geometry supplies bloom; no camera-facing glow discs.
-if(rain){for(int i=0;i<1200;i++){float x=fmodf(i*13.713f,45)-15,z=fmodf(i*7.571f,45)-15,y=fmodf(i*.713f-time*22,23);if(y<0)y+=23;V a{x,y,z},b=a+V{-.04,.35,0};V side=rightv*.007f;quad(a-side,a+side,b+side,b-side,14);}}
-bool remove=keys[VK_SHIFT]||keys['X']||erasing;if(!walk&&hit&&captureFile.empty()&&mouseInView){if(remove&&hasRem){origin=hitRem+V{.5,.5,.5};box(1.025,1.025,1.025,0,0,0,10);origin={};}else if(!remove&&hasAdd&&selected!=16&&!isPipeTool(selected)){int t=selected,r=rotation;autoFacing(t,r);origin=hitAdd+V{.5,.5,.5};turn=r;ghostMode=true;piece(t);ghostMode=false;turn=0;origin={};}if(pendingCable){V b=anchor();tube(anchorA,b,.024,10);}if(isPipeTool(selected)&&hasRem&&hasAdd){PipeNode g;if(pipeHitCell(g)){V c=pipeCenter(g);tube(c,c+PipeN[g.face]*(-.02f),.02f,10);}}}
+if(rain){
+ float wind=.14f+.06f*sinf(time*.65f);
+ for(int i=0;i<2600;i++){
+  float hx=fmodf(i*13.713f+time*.25f,52.f)-26.f,hz=fmodf(i*7.571f+time*.18f,52.f)-26.f;
+  float spd=17.f+(i%9)*.9f;float y=fmodf(i*.713f-time*spd,30.f);if(y<0)y+=30.f;
+  float len=.42f+(i%5)*.08f,w=.0035f+((i%3)*.0022f);
+  V a{eye.x+hx,eye.y-10.f+y,eye.z+hz},b=a+V{-wind,len,.03f};
+  V side=rightv*w;quad(a-side,a+side,b+side,b-side,14);
+ }
+}
+bool remove=keys[VK_SHIFT]||keys['X']||erasing;if(!walk&&hit&&captureFile.empty()&&mouseInView){if(remove&&hasRem){origin=hitRem+V{.5,.5,.5};box(1.025,1.025,1.025,0,0,0,10);origin={};}else if(!remove&&hasAdd&&selected!=16&&!isPipeTool(selected)){int t=selected,r=rotation;autoFacing(t,r);origin=hitAdd+V{.5,.5,.5};turn=r;ghostMode=true;piece(t);ghostMode=false;turn=0;origin={};}if(pendingCable){V b=anchor();tube(anchorA,b,.024,10);}if(isPipeTool(selected)&&hasRem){PipeNode g;if(pipeHitCell(g)){V c=pipeCenter(g);tube(c,c+PipeN[g.face]*(-.02f),.02f,10);}}}
 vertices.insert(vertices.end(),transparent.begin(),transparent.end());size_t bytes=vertices.size()*sizeof(Vertex);if((staticCount+vertices.size())*sizeof(Vertex)>maxVertexBytes)fail("Dynamic geometry capacity exceeded");memcpy((char*)vertexMap+staticCount*sizeof(Vertex),vertices.data(),bytes);vertexCount=staticCount+(uint32_t)vertices.size();}
 float cameraWaterDepth(V camera){
  int x=(int)floorf(camera.x),y=(int)floorf(camera.y),z=(int)floorf(camera.z);auto c=get(x,y,z);
@@ -366,7 +401,13 @@ gpu.cfg={exposure, (rain?.012f:0.f)+fog*fog*.09f+.003f, ao?1.f:0.f, (float)world
 for(int i=0;i<8;i++)gpu.lamps[i].w=(gpu.lamps[i].x||gpu.lamps[i].y||gpu.lamps[i].z)?(night?4.5f:0.f):0.f; // HTML day lamps off
 gpu.lighting={night?.28f:hi*1.25f,rain?1.f:0.f,cameraWaterDepth(eye),0}; // hemi boost for brighter foliage/concrete
 memcpy(stateMap,&gpu,sizeof(gpu));
-PostU pu{time,night?.1f:(rain?moodSat*.4f:moodSat),ao?1.f:0.f,exposure};memcpy(postMap,&pu,sizeof(pu));
+// Project sun to screen UV for godrays (same vp layout as sky.frag)
+V sunFar=eye+sunDir*120.f;
+float cx=gpu.vp[0]*sunFar.x+gpu.vp[4]*sunFar.y+gpu.vp[8]*sunFar.z+gpu.vp[12];
+float cy=gpu.vp[1]*sunFar.x+gpu.vp[5]*sunFar.y+gpu.vp[9]*sunFar.z+gpu.vp[13];
+float cw=gpu.vp[3]*sunFar.x+gpu.vp[7]*sunFar.y+gpu.vp[11]*sunFar.z+gpu.vp[15];
+float sunU=.5f,sunV=.5f;if(fabsf(cw)>.05f){sunU=cx/cw*.5f+.5f;sunV=cy/cw*.5f+.5f;if(cw<0){sunU=-10.f;sunV=-10.f;}}
+PostU pu{time,night?.1f:(rain?moodSat*.4f:moodSat),ao?1.f:0.f,exposure,sunU,sunV,rain?1.f:0.f,night?1.f:0.f};memcpy(postMap,&pu,sizeof(pu));
 if(benchmarkRun)perfBuildMs=perfClock()-perfBuildStart;uint32_t index;VkResult r=vkAcquireNextImageKHR(device,swapchain,UINT64_MAX,acquired,VK_NULL_HANDLE,&index);if(r==VK_ERROR_OUT_OF_DATE_KHR){rebuildSwap=true;return;}if(r!=VK_SUBOPTIMAL_KHR)vkcheck(r,"Acquire image");vkcheck(vkResetFences(device,1,&fence),"Reset fence");vkcheck(vkResetCommandBuffer(command,0),"Reset command buffer");VkCommandBufferBeginInfo begin{VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO};vkcheck(vkBeginCommandBuffer(command,&begin),"Begin frame");performanceMark(0);
 VkClearValue clear[2]{};clear[0].color={{gpu.sky.x,gpu.sky.y,gpu.sky.z,1}};clear[1].depthStencil={1,0};
 VkRenderPassBeginInfo rp{VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO};rp.renderPass=scenePass;rp.framebuffer=sceneFB;rp.renderArea.extent=extent;rp.clearValueCount=2;rp.pClearValues=clear;

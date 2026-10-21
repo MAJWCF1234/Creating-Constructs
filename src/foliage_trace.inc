@@ -1,6 +1,6 @@
 // Exact plant triangles for water rays. The coarse nature mask is only for shadows.
 VkBuffer foliageBuffer;VkDeviceMemory foliageMemory;void* foliageMap=nullptr;size_t foliageCapacity=16;
-bool reflectedPlant(int material){return material==6||material==16||material==17||material==19||material==20||material==21||material>=22;}
+bool reflectedPlant(int material){return material==6||material==16||material==17||material==20||material==21||(material>=22&&material<38);}
 struct FoliageTriangle {Vertex v[3];V lo,hi,center;};
 struct FoliageNode {V lo,hi;uint32_t packed=0,escape=0;};
 std::vector<FoliageTriangle> foliageTriangles;std::vector<FoliageNode> foliageNodes;std::vector<F4> foliageRecords;

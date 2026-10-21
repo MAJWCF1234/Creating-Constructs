@@ -1,7 +1,16 @@
 // World-space water shading: continuous ripples, geometric reflections/refraction,
 // absorption and a thin shoreline. Bounded grid traces reuse the scene collision mask.
-int waterCellType(vec3 q){ivec3 c=ivec3(floor(q));if(any(lessThan(c,ivec3(0)))||c.x>=int(s.cfg.w)||c.z>=int(s.cfg.w)||c.y>=20)return -1;int v=s.cells[c.x*640+c.z*20+c.y];return v==0?-1:(v-1)%64;}
-bool waterStructure(vec3 q){return waterCellType(q)!=14&&structureSolid(q);}
+int waterCellType(vec3 q){ivec3 c=ivec3(floor(q));if(any(lessThan(c,ivec3(0)))||c.x>=int(s.cfg.w)||c.z>=int(s.cfg.w)||c.y>=20)return -1;int v=s.cells[c.x*640+c.z*20+c.y];return v==0?-1:(v-1)%128;} // PieceEncodingStride=128
+bool waterStructure(vec3 q){
+ int t=waterCellType(q);if(t<0||t==14)return false;
+ // Pool basins (24): only rim/floor collide — open water volume must not self-hit
+ // (that painted warm specular through the concrete walls).
+ if(t==24){
+  vec3 f=fract(q);
+  return f.y<.12||(f.y<.52&&max(abs(f.x-.5),abs(f.z-.5))>.42);
+ }
+ return structureSolid(q);
+}
 vec3 waterSky(vec3 d){vec3 sky=mix(s.sky.rgb,s.atmos.rgb,smoothstep(0.,.85,d.y));vec3 sunColor=mix(vec3(1.,.95,.86),vec3(.45,.52,.75),s.sky.w);return sky+sunColor*pow(max(dot(d,normalize(s.sun.xyz)),0.),320.)*s.sun.w;}
 bool waterStructureTrace(vec3 start,vec3 direction,float limit,out vec3 hit,out vec3 normal,out float distance){
  float t=.045,previous=0.;

@@ -212,6 +212,16 @@ def import_pine(obj_name, out_name, bark_file, branch_file):
 import_pine("pine_tree_n_1", "pine_1", "pine_bark_2.png", "pine_branch_3.png")
 import_pine("pine_tree_n_2", "pine_2", "pine_bark_1.png", "pine_branch_1.png")
 
+# Fallen timber + mushrooms (reuse bark atlas — no new texture layers / boardform shift)
+obj("tree_log_1", lambda m: bark)
+models[-1] = ("log", models[-1][1])
+obj("tree_stump_1", lambda m: bark)
+models[-1] = ("stump", models[-1][1])
+obj("mushroom_n_1", lambda m: bark)
+models[-1] = ("mushroom_1", models[-1][1])
+obj("mushroom_n_2", lambda m: bark)
+models[-1] = ("mushroom_2", models[-1][1])
+
 header = [
     "// Converted from the user local Retro Official packs; see assets/nature/manifest.json.",
     "struct NatureVertex {V p,n;float u,v;int material;};",

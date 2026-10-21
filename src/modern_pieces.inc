@@ -56,3 +56,8 @@ case 60: // tower core — 1×2 walk-in shaft, -Z open, fits standing player
 case 61:box(1,1,1,0,0,0,19);break; // exposed aggregate
 case 62: // corbel bracket
  box(.55f,.12f,.5f,0,.38f,-.05f);box(.4f,.12f,.4f,0,.24f);box(.26f,.12f,.3f,0,.1f,.05f);break;
+// Nature wave — stone/boulder via rock surface nets; timber/fungi from PSX pack
+case 63:case 64:box(1,1,1,0,0,0,38);break;
+case 65:natureLog();break;
+case 66:natureStump();break;
+case 67:natureMushroom();break;

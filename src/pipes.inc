@@ -181,16 +181,35 @@ void renderPipes(){
  }
 }
 bool pipeHitCell(PipeNode& out){
- if(!hasRem||!hasAdd)return false;
- V d=hitAdd-hitRem;int face=-1;
- if(d.x>0)face=0;else if(d.x<0)face=1;else if(d.y>0)face=2;else if(d.y<0)face=3;else if(d.z>0)face=4;else if(d.z<0)face=5;else return false;
+ // Prefer add→rem face (exterior mount). Mount on the occupied cell under the cursor,
+ // not footprint root — multi-cell pieces otherwise put pipes inside the volume.
+ if(!hasRem)return false;
+ int cx=(int)hitRem.x,cy=(int)hitRem.y,cz=(int)hitRem.z;
+ // Refine to the voxel the ray actually entered when footprint root differs
+ {int ix=(int)floorf(hitPoint.x),iy=(int)floorf(hitPoint.y),iz=(int)floorf(hitPoint.z);
+  if(inb(ix,iy,iz)&&get(ix,iy,iz).t>=0){cx=ix;cy=iy;cz=iz;}}
+ int face=-1;
+ if(hasAdd){
+  V d=hitAdd-V{(float)cx,(float)cy,(float)cz};
+  // Only accept cardinal adjacency; otherwise fall back (avoids 2-wide footprint diagonals)
+  if(fabsf(d.x)+fabsf(d.y)+fabsf(d.z)<1.1f){
+   if(d.x>0)face=0;else if(d.x<0)face=1;else if(d.y>0)face=2;else if(d.y<0)face=3;else if(d.z>0)face=4;else if(d.z<0)face=5;
+  }
+ }
+ if(face<0){
+  V d=hitPoint-(V{(float)cx,(float)cy,(float)cz}+V{.5f,.5f,.5f});
+  float ax=fabsf(d.x),ay=fabsf(d.y),az=fabsf(d.z);
+  if(ax>=ay&&ax>=az)face=d.x>=0?0:1;
+  else if(ay>=ax&&ay>=az)face=d.y>=0?2:3;
+  else face=d.z>=0?4:5;
+ }
  V N=PipeN[face],U=PipeU[face],Vdir=PipeV[face];
- V faceC=hitRem+V{.5f,.5f,.5f}+N*.5f;
+ V faceC=V{(float)cx,(float)cy,(float)cz}+V{.5f,.5f,.5f}+N*.5f;
  V local=hitPoint-faceC;
  float su=local.x*U.x+local.y*U.y+local.z*U.z,sv=local.x*Vdir.x+local.y*Vdir.y+local.z*Vdir.z;
  int u=(int)std::round(su/PipePitch+1.f);u=std::clamp(u,0,2);
  int v=(int)std::round(sv/PipePitch+1.f);v=std::clamp(v,0,2);
- out={(int8_t)hitRem.x,(int8_t)hitRem.y,(int8_t)hitRem.z,(int8_t)face,(int8_t)u,(int8_t)v,0,0,0};
+ out={(int8_t)cx,(int8_t)cy,(int8_t)cz,(int8_t)face,(int8_t)u,(int8_t)v,0,0,0};
  return true;
 }
 bool pipeManual=false;

@@ -28,7 +28,7 @@ V ivyAttached(V local){
  int px=(int)floorf(p.x),py=(int)floorf(p.y),pz=(int)floorf(p.z);
  for(int dx=-2;dx<=2;dx++)for(int dy=-1;dy<=1;dy++)for(int dz=-2;dz<=2;dz++){
   int x=px+dx,y=py+dy,z=pz+dz;auto c=get(x,y,z);
-  if(c.t<0||c.t==11||c.t==13||c.t==14||c.t==15||c.t==16||c.t==25||c.t==26||c.t==27||c.t==41||c.t==42)continue;
+  if(c.t<0||c.t==11||c.t==13||c.t==14||c.t==15||c.t==16||c.t==25||c.t==26||c.t==27||c.t==41||c.t==42||c.t==65||c.t==66||c.t==67)continue;
   V q{std::clamp(p.x,x+.008f,x+.992f),std::clamp(p.y,y+.008f,y+.992f),std::clamp(p.z,z+.008f,z+.992f)};
   if(N.x>.5f)q.x=x+1.f;if(N.x<-.5f)q.x=(float)x;if(N.z>.5f)q.z=z+1.f;if(N.z<-.5f)q.z=(float)z;
   // Find the actual collision surface for partial/new architectural pieces.

@@ -32,6 +32,11 @@ void catalogSelfTest(){
  put(2,0,2,37);check(!solidAt({2.5f,.5f,2.5f}),"pendant is nonblocking");
  put(2,0,2,39);check(solidAt({2.5f,.32f,2.5f})&&!solidAt({2.5f,.7f,2.5f}),"bench low profile collision");
  put(2,0,2,40);check(!solidAt({2.5f,.5f,2.5f}),"water remains traversable");
+ put(2,0,2,63);check(solidAt({2.5f,.5f,2.5f})&&!solidAt({2.95f,.5f,2.95f}),"stone rock collision");
+ put(2,0,2,64);check(solidAt({2.5f,.5f,2.5f})&&!solidAt({2.98f,.9f,2.98f}),"boulder rock collision");
+ put(2,0,2,65);check(solidAt({2.5f,.2f,2.5f})&&!solidAt({2.5f,.7f,2.5f}),"log low profile collision");
+ put(2,0,2,66);check(solidAt({2.5f,.4f,2.5f})&&!solidAt({2.95f,.4f,2.95f}),"stump trunk collision");
+ put(2,0,2,67);check(!solidAt({2.5f,.5f,2.5f}),"mushroom is nonblocking");
  world=World{};put(3,2,3,0);origin={3.5f,2.5f,4.5f};turn=0;
  ivyBeginRefresh();vertices.clear();transparent.clear();IvyRandom leafRng{137u};ivyLeaf({0,0,-.4f},{.7f,-.4f,.3f},.12f,leafRng);
  check(vertices.size()==24,"ivy leaf uses eight folded faces without overlapping flat triangles");

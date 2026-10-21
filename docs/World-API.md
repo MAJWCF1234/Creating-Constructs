@@ -151,7 +151,7 @@ def to_share(N: int, cells: dict, cables=(), pipes=()) -> dict:
 
 ## 4. Piece catalog (`t`)
 
-Canonical names live in `src/catalog.inc` / HTML `TN` (keep them in sync via `tools/sync_catalog.py`). Current **`PieceCount = 56`**.
+Canonical names live in `src/catalog.inc` / HTML `TN` (keep them in sync via `tools/sync_catalog.py`). Current **`PieceCount = 68`**. GPU cell encoding uses **`PieceEncodingStride = 128`** (`1 + t + stride * r`).
 
 | ID | Name | Notes |
 |----|------|--------|
@@ -218,6 +218,11 @@ Canonical names live in `src/catalog.inc` / HTML `TN` (keep them in sync via `to
 | 60 | Core | Tower shaft — **1×2** tall walk-in, opening on local −Z |
 | 61 | Aggregate | Exposed-aggregate concrete material |
 | 62 | Corbel | Stepped bracket under overhangs |
+| 63 | Stone | Procedural rock — adaptive surface nets (hard profile; flat contacts vs moss/architecture) |
+| 64 | Boulder | Larger procedural rock (same nets family as Stone) |
+| 65 | Log | Fallen timber mesh (PSX nature pack) |
+| 66 | Stump | Tree stump mesh |
+| 67 | Mushroom | Soft prop mushroom mesh (nonblocking) |
 
 **Do not** put types `16` or `43–46` in `c` for generators. Cables and pipes have their own arrays.
 

@@ -48,6 +48,10 @@ void naturePine(){
  if(rng.next()<.5f)natureModel(nature_pine_1,{0,-.5f,0},scale,angle,true,1.15f);
  else natureModel(nature_pine_2,{0,-.5f,0},scale,angle,true,1.15f);
 }
+void natureLog(){IvyRandom rng{natureSeed()+91};natureModel(nature_log,{0,-.35f,0},rng.range(.85f,1.05f),rng.range(0,2*PI),true,1.f);}
+void natureStump(){IvyRandom rng{natureSeed()+97};natureModel(nature_stump,{0,-.5f,0},rng.range(.9f,1.15f),rng.range(0,2*PI),true,1.f);}
+void natureMushroom(){IvyRandom rng{natureSeed()+103};float s=rng.range(.55f,.85f),a=rng.range(0,2*PI);
+ if(rng.next()<.5f)natureModel(nature_mushroom_1,{0,-.5f,0},s,a,false);else natureModel(nature_mushroom_2,{0,-.5f,0},s,a,false);}
 void natureFern(int variant,V root,float scale,float angle){
  switch(variant%3){case 0:natureModel(nature_bracken,root,scale,angle,false);break;case 1:natureModel(nature_bracken_2,root,scale,angle,false);break;default:natureModel(nature_bracken_3,root,scale,angle,false);break;}
 }
@@ -76,5 +80,19 @@ void natureUnderstory(float height,bool planter){
   }else if(community==4)natureModel(nature_clover,root,s*(planter?.48f:.68f),a,false);
   else if(community==5)natureFern(variant,root,s*(planter?.42f:.6f),a);
   else natureGrass(variant,root,s,a,false);
+ }
+}
+// Water-edge / flooded moss plant set — reeds, lily pads, emergent fringe (reuses pack meshes).
+void natureWaterUnderstory(float height){
+ IvyRandom rng{natureSeed()^521u};
+ int count=3+(int)(rng.next()*5);
+ for(int i=0;i<count;i++){
+  V root{rng.range(-.42f,.42f),height,rng.range(-.42f,.42f)};
+  float a=rng.range(0,2*PI),s=rng.range(.75f,1.25f);int variant=std::min(5,(int)(rng.next()*6));
+  int kind=(int)(rng.next()*4);
+  if(kind==0)natureGrass(variant,root,s*rng.range(1.15f,1.55f),a,true); // reed cluster
+  else if(kind==1)natureModel(nature_clover,{root.x,root.y-rng.range(.02f,.08f),root.z},s*rng.range(.95f,1.35f),a,false); // lily pad
+  else if(kind==2){if(variant&1)natureModel(nature_dogbane,root,s*.7f,a,false);else natureModel(nature_dogbane_2,root,s*.7f,a,false);}
+  else natureFern(variant,root,s*.55f,a);
  }
 }

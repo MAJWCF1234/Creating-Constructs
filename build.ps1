@@ -33,4 +33,4 @@ cl /nologo /std:c++17 /O2 /Ot /fp:precise /GL /MT /EHsc /W3 /DUNICODE /D_UNICODE
 if ($LASTEXITCODE -ne 0) { throw 'C++ build failed' }
 $size = (Get-Item (Join-Path Play $OutputName)).Length
 Write-Output "Executable: $size bytes"
-if ($size -gt 19000000) { throw 'Executable exceeds 19 MB budget' }
+if ($size -gt 32000000) { throw 'Executable exceeds 32 MB budget' }

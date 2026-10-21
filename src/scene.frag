@@ -26,6 +26,38 @@ void main(){
  if(mat==8){albedo=sampleMap(5,uv);bumpLayer=5;bumpScale=1.5;rough=.45;metal=.5;}  // steel
  if(mat==18){albedo=sampleMap(23,uv);bumpLayer=23;bumpScale=1.35;rough=.92;}       // board-form concrete (layer 8+15)
  if(mat==19){albedo=sampleMap(0,uv)*vec3(.72,.69,.64);bumpLayer=0;bumpScale=1.4;rough=.98;} // exposed aggregate
+ if(mat==38){ // Tiny-Glade rock — topo albedo + bump normals, 2× UV scale
+  // topo layers start at 24; 0 sandstone,1 top,2 limestone,3 mossy lim,4 granite,5 brown,6 schist
+  float cellH=fract(sin(dot(floor(p),vec3(12.9,78.2,45.1)))*43758.5);
+  int pick=int(cellH*5.); // bias warm stone: sandstone, brown, granite, limestone, schist
+  int rockVar=pick==0?0:pick==1?5:pick==2?4:pick==3?2:6;
+  int sideLayer=24+rockVar;
+  int topLayer=(rockVar==0)?25:sideLayer;
+  vec3 bw=abs(N);bw=bw/(bw.x+bw.y+bw.z+1e-4);
+  float sc=1.35; // denser than 1×, not so tight it reads as voxels
+  vec3 tx=texture(maps,vec3(fract(p.zy*sc),float(sideLayer))).rgb;
+  vec3 ty=texture(maps,vec3(fract(p.xz*sc),float(topLayer))).rgb;
+  vec3 tz=texture(maps,vec3(fract(p.xy*sc),float(sideLayer))).rgb;
+  albedo=tx*bw.x+ty*bw.y+tz*bw.z;
+  albedo*=vec3(1.08,1.02,.94); // warm tan lift like Tiny Glade cliffs
+  if(cellH>.78){vec3 mossR=texture(maps,vec3(fract(p.xz*sc),30.)).rgb;albedo=mix(albedo,mossR,.28);} // thick moss in crevices
+  float facet=pow(max(max(bw.x,bw.y),bw.z),1.6);
+  albedo*=mix(.82,1.08,facet);
+  // Bump from topo height (luma) — drives normals; UV matches albedo scale
+  uv=abs(N.y)>.7?p.xz*sc:(abs(N.x)>.7?p.zy*sc:p.xy*sc);
+  bumpLayer=(abs(N.y)>.7)?topLayer:sideLayer;bumpScale=1.85;rough=.92;
+ }
+ if(mat==39){ // wet-moss dirt — topography dirt / rocky / mossy soil
+  float cellH=fract(sin(dot(floor(p),vec3(19.1,47.3,91.7)))*43758.5);
+  int dirtLayer=31+int(cellH*3.); // 31 earth, 32 rocky, 33 mossy  (24+7..)
+  vec3 bw=abs(N);bw=bw/(bw.x+bw.y+bw.z+1e-4);float sc=2.4; // doubled
+  vec3 tx=texture(maps,vec3(fract(p.zy*sc),float(dirtLayer))).rgb;
+  vec3 ty=texture(maps,vec3(fract(p.xz*sc),float(dirtLayer))).rgb;
+  vec3 tz=texture(maps,vec3(fract(p.xy*sc),float(dirtLayer))).rgb;
+  albedo=tx*bw.x+ty*bw.y+tz*bw.z;
+  uv=abs(N.y)>.7?p.xz*sc:(abs(N.x)>.7?p.zy*sc:p.xy*sc);
+  bumpLayer=dirtLayer;bumpScale=2.4;rough=.99;
+ }
  if(mat==10){outColor=vec4(.910,.314,.110,.35);return;}                             // ghost 0xe8501c
  if(mat==11){albedo=vec3(.467,.475,.467);rough=1.;}                                 // ground 0x777977
  if(mat==12){ // plot: concrete map * 0xcfcdc5, bumpScale .5, grid opacity .25
@@ -36,7 +68,10 @@ void main(){
   albedo=mix(albedo,albedo*vec3(.114,.114,.106),grid*.25); // 0x1d1d1b @ 25%
  }
  if(mat==13){albedo=vec3(.082,.082,.082);rough=.6;metal=.3;}                        // cable wire 0x151515 / 0x121212
- if(mat==14){outColor=vec4(.75,.8,.85,.35);return;}                                  // rain
+ if(mat==14){ // rain streak — soft blue-gray, camera-facing alpha
+  float shimmer=.25+.2*fract(sin(dot(p.xz,vec2(12.9,78.2))+s.eye.w*3.)*43758.5);
+  outColor=vec4(.68,.76,.88,.18+shimmer*.28);return;
+ }
  if(mat==15){albedo=vec3(.290,.227,.165);rough=1.;}                                 // bark 0x4a3a2a
  if(mat==16){ // tree canopy — foliage biome tint (greyscale ivy mask)
   vec4 iv=texture(maps,vec3(uv*2.,7.));
@@ -50,12 +85,7 @@ void main(){
   albedo=gr.rgb*vec3(.706,.784,.604);rough=1.;N=normalize(vec3(0,1,0)+L*.15);
  }
 
- if(mat==19){ // ivy leaf billboard — foliage biome tint
-  vec2 fu=clamp(n.xy,0.,1.);
-  vec4 frn=texture(maps,vec3(fu,7.));
-  if(frn.a<.45)discard;
-  albedo=applyBiome(frn.rgb,biomeFoliage(p));rough=1.;N=normalize(vec3(0,1,0)+L*.2);
- }
+ // Ivy leaves use mat 20 (geometric); mat 19 is aggregate only — do not override.
 
  // Individual ivy leaves and stems use geometric, two-sided normals.
  if(mat==20){
@@ -65,7 +95,8 @@ void main(){
  }
  if(mat==21){albedo=vec3(.105,.105,.052);rough=1.;}
 
- if(mat>=22){
+ // Nature plant mats only (22..37). Topo rock/dirt are 38/39 — must not hit foliage path.
+ if(mat>=22&&mat<38){
   vec4 vegetation=texture(maps,vec3(foliageUv,float(mat-22+8)));
   // Bark mats from natureBarkLayer[]: 23 deciduous, 32 birch, 33/35 pine.
   bool bark=mat==23||mat==32||mat==33||mat==35;
@@ -90,7 +121,7 @@ void main(){
  // atmos.w = sat, cfg.x=exposure, cfg.y=fog density, cfg.z=ao on, sky.rgb=hor, atmos.rgb=top, sky.w=night
  float nd=max(dot(N,L),0.);
  float shadow=1.;
- if(nd>0.&&mat!=4&&mat!=17&&mat!=19&&mat<22&&s.sky.w<.5) shadow=softShadow(p+normalize(n)*.05,L);
+ if(nd>0.&&mat!=4&&mat!=17&&mat!=20&&mat<22&&s.sky.w<.5) shadow=softShadow(p+normalize(n)*.05,L);
  shadow=mix(.42,1.,shadow); // keep bounce light in shadows
 
  // HemisphereLight: day sky 0xd0d4d6 / gnd 0x6b675e ; night sky 0x4a5a90
@@ -111,7 +142,7 @@ void main(){
   color+=albedo*vec3(.624,.706,.847)*max(dot(N,F),0.)*.52;
  }
  // foliage wrap / rim so greens don't go flat black
- if(mat==1||mat==6||mat==16||mat==17||mat==19||(mat>=22&&mat!=23&&mat!=32&&mat!=33&&mat!=35)){
+ if(mat==1||mat==6||mat==16||mat==17||(mat>=22&&mat!=23&&mat!=32&&mat!=33&&mat!=35)){
   float wrap=max(dot(N,L)*.5+.5,0.);
   color+=albedo*sunCol*wrap*.18*s.sun.w;
   color+=albedo*vec3(.45,.55,.35)*.12;

@@ -1,5 +1,5 @@
 // Offscreen scene + exact HTML post pass (SSAO/bloom/tonemap)
-struct PostU{float t,sat,ao,ex;};
+struct PostU{float t,sat,ao,ex,sunX,sunY,rain,night;};
 VkImage sceneColorImg=0,sceneDepthImg=0;VkImageView sceneColorView=0,sceneDepthView=0;VkDeviceMemory sceneColorMem=0,sceneDepthMem=0;
 VkFramebuffer sceneFB=0;VkRenderPass scenePass=0,postPass=0;VkPipeline postPipeline=0;VkPipelineLayout postPipeLayout=0;
 VkDescriptorSetLayout postDescLayout=0;VkDescriptorSet postDescSet=0;VkDescriptorPool postPool=0;

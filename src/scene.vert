@@ -10,5 +10,7 @@ layout(location=2) flat out int mat;
 layout(location=3) out float ao;
 layout(std430,binding=0) readonly buffer State {mat4 vp;vec4 eye;vec4 sun;vec4 sky;vec4 cfg;vec4 lamps[8];vec4 atmos;vec4 lighting;int cells[20480];uint natureMask[];} s;
 void main(){p=pos;foliageUv=natureUv;n=normal;
- if(int(info.x)>=22&&int(info.x)!=23){float wind=sin(s.eye.w*1.3+pos.x*.7+pos.z)*.014;p.x+=wind;p.z+=wind*.4;}
-mat=int(info.x);ao=info.y;gl_Position=s.vp*vec4(p,1);}
+ // Foliage wind only — never topo rock/dirt (38/39) or bark
+ int mid=int(info.x);bool bark=mid==23||mid==32||mid==33||mid==35;
+ if(mid>=22&&mid<38&&!bark){float wind=sin(s.eye.w*1.3+pos.x*.7+pos.z)*.014;p.x+=wind;p.z+=wind*.4;}
+mat=mid;ao=info.y;gl_Position=s.vp*vec4(p,1);}

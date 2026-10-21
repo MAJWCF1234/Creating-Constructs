@@ -18,6 +18,7 @@ MESH_NAMES = [
     "nature_bracken", "nature_bracken_2", "nature_bracken_3",
     "nature_meadow", "nature_meadow_2", "nature_tallgrass", "nature_tallgrass_2",
     "nature_dogbane", "nature_dogbane_2", "nature_clover", "nature_aster", "nature_goldenrod",
+    "nature_log", "nature_stump", "nature_mushroom_1", "nature_mushroom_2",
 ]
 MARKER_START = "/*NATURE_TREES_PACK*/"
 MARKER_END = "/*NATURE_TREES_PACK_END*/"

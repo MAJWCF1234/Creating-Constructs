@@ -1,0 +1,58 @@
+[
+  {
+    "name": "rock_sandstone",
+    "source": "1_stone/mossy_faded_orange_sandstone_2a06a.png"
+  },
+  {
+    "name": "rock_sandstone_top",
+    "source": "1_stone/mossy_faded_orange_sandstone_top_35w73.png"
+  },
+  {
+    "name": "rock_limestone",
+    "source": "1_stone/light_limestone_boulders_pufrc.png"
+  },
+  {
+    "name": "rock_limestone_mossy",
+    "source": "1_stone/mossy_light_limestone_boulders_194qi.png"
+  },
+  {
+    "name": "rock_granite",
+    "source": "1_stone/dark_gray_granite_d9p2d.png"
+  },
+  {
+    "name": "rock_brown_sandstone",
+    "source": "1_stone/brown_sandstone_6q5oe.png"
+  },
+  {
+    "name": "rock_schist_mossy",
+    "source": "1_stone/mossy_blue_schist_0y61i.png"
+  },
+  {
+    "name": "dirt_earth",
+    "source": "5_dirt/brown_earth_118xl.png"
+  },
+  {
+    "name": "dirt_rocky",
+    "source": "5_dirt/rocky_soil_mkrqh.png"
+  },
+  {
+    "name": "dirt_mossy",
+    "source": "5_dirt/mossy_soil_m41dz.png"
+  },
+  {
+    "name": "moss_thick",
+    "source": "4_grass_leaves/thick_moss_rdb9p.png"
+  },
+  {
+    "name": "gravel_gray",
+    "source": "6_debris_gravel/gray_gravel_0jd6n.png"
+  },
+  {
+    "name": "gravel_stones",
+    "source": "6_debris_gravel/small_stones_0yoa9.png"
+  },
+  {
+    "name": "gravel_mossy",
+    "source": "6_debris_gravel/mossy_sandstone_debris_1dib6.png"
+  }
+]
