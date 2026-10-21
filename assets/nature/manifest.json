@@ -122,5 +122,17 @@
   {
     "source": "O:\\retro official\\PSX Nature v1.7.3b\\PSX Nature v1.7.3b\\PSX Nature (Tree branches separated)\\Models\\other-formats\\OBJ\\mushroom_n_2.obj",
     "sha256": "f007f7def5e652fc9286fe18e50ff7a4346365e4c417ac5ab8cc49ba4c18db57"
+  },
+  {
+    "source": "O:\\retro official\\Nature\\psx-plants\\psx-plants_v1.0\\models\\rhus_typhina_small_01.glb",
+    "sha256": "6d17c521fb9dcc48bb8472394395588ca8abb5531bee4c766390120cc7d45eff"
+  },
+  {
+    "source": "O:\\retro official\\Nature\\psx-plants\\psx-plants_v1.0\\models\\rhus_typhina_small_02.glb",
+    "sha256": "e739fe89ee627ddcd7e388f618fa4e6437dca24cf5d469b850c712a43c4de4b8"
+  },
+  {
+    "source": "O:\\retro official\\Nature\\psx-plants\\psx-plants_v1.0\\models\\rhus_typhina_small_03.glb",
+    "sha256": "954f5a9ae7c1b6ae656bf1461afee38b4052e498752a54a5b5541f42ca7c79af"
   }
 ]

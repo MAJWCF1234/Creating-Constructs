@@ -6,11 +6,52 @@ layout(location=3) in float ao; // HTML instanceColor scalar
 layout(location=4) in vec2 foliageUv;
 layout(location=0) out vec4 outColor;
 layout(std430,binding=0) readonly buffer State {
- mat4 vp;vec4 eye;vec4 sun;vec4 sky;vec4 cfg;vec4 lamps[8];vec4 atmos;vec4 lighting;int cells[20480];uint natureMask[];
-} s;
+ mat4 vp;vec4 eye;vec4 sun;vec4 sky;vec4 cfg;vec4 lamps[16];vec4 atmos;vec4 lighting;int cells[81920];uint natureMask[];
+} s; // MaxPlot 64 → 64*64*20
 layout(binding=1) uniform sampler2DArray maps; // 0 conc 1 moss 2 ivy 3 brick 4 wood 5 steel … 8+N boardform
 
+// Recipes: style bits 0..4, texture quarter turns 5..6, scale 7..8.
+int surfaceBase(int style,int fallback){
+ if(style==1)return 0;if(style==2)return 18;if(style==3)return 19;
+ if(style>=4&&style<=19)return 7;
+ return style==20?5:style==21?8:style==22?38:style==23?39:fallback;
+}
+vec3 surfacePoint(vec3 point,int recipe){
+ int rotation=(recipe>>5)&3;for(int i=0;i<rotation;i++)point=vec3(point.z,point.y,-point.x);
+ int scale=(recipe>>7)&3;return point*(scale==0?.5:scale==2?2.:1.);
+}
+ivec2 brickLayers(int recipe){int style=recipe&31;
+ if(style<5)return ivec2(3,39);
+ int index=style==5?2:style==6?4:style-1;
+ int top=style==5?3:style==6?5:1;
+ return ivec2(40+index,40+top);
+}
+vec4 sampleBrickLod(vec3 point,vec3 normal,int recipe,float lod){
+ ivec2 layers=brickLayers(recipe);vec3 weights=pow(abs(normal),vec3(4.));weights/=max(dot(weights,vec3(1.)),1e-5);
+ return textureLod(maps,vec3(point.zy*2.,float(layers.x)),lod)*weights.x
+       +textureLod(maps,vec3(point.xz*2.,float(layers.y)),lod)*weights.y
+       +textureLod(maps,vec3(point.xy*2.,float(layers.x)),lod)*weights.z;
+}
+vec4 sampleBrick(vec3 point,vec3 normal,int recipe){
+ ivec2 layers=brickLayers(recipe);vec3 weights=pow(abs(normal),vec3(4.));weights/=max(dot(weights,vec3(1.)),1e-5);
+ return texture(maps,vec3(point.zy*2.,float(layers.x)))*weights.x
+       +texture(maps,vec3(point.xz*2.,float(layers.y)))*weights.y
+       +texture(maps,vec3(point.xy*2.,float(layers.x)))*weights.z;
+}
 bool solid(vec3 q);
+bool structureSolid(vec3 q);
+float structureSunRay(vec3 q,vec3 direction){
+ vec3 safe=vec3(abs(direction.x)<1e-5?1e-5:direction.x,abs(direction.y)<1e-5?1e-5:direction.y,abs(direction.z)<1e-5?1e-5:direction.z);
+ for(int i=0;i<240;i++){
+  if(q.y>20.||q.x<0.||q.z<0.||q.x>=s.cfg.w||q.z>=s.cfg.w)return 1.;
+  if(q.y<0.||structureSolid(q))return 0.;
+  ivec3 cell=ivec3(floor(q));int value=s.cells[cell.x*1280+cell.z*20+cell.y];
+  vec3 boundary=floor(q)+vec3(greaterThan(safe,vec3(0.)));vec3 distances=(boundary-q)/safe;
+  float advance=min(distances.x,min(distances.y,distances.z));
+  q+=direction*(value==0?max(.006,advance+.003):min(.06,max(.006,advance+.003)));
+ }return 0.;
+}
+#include "foliage_shadow.glsl"
 float softShadow(vec3 start,vec3 L){
  // Approximate THREE.PCFSoftShadowMap radius=3
  float sh=0.;
@@ -19,53 +60,15 @@ float softShadow(vec3 start,vec3 L){
  const vec2 o[9]=vec2[9](vec2(0),vec2(1,0),vec2(-1,0),vec2(0,1),vec2(0,-1),vec2(.7,.7),vec2(-.7,.7),vec2(.7,-.7),vec2(-.7,-.7));
  for(int j=0;j<9;j++){
   vec3 dir=normalize(L+(U*o[j].x+B*o[j].y)*.04);
-  vec3 q=start;float hit=1.;
-  for(int i=0;i<80;i++){q+=dir*.15;if(q.y>22.||q.x<-2.||q.z<-2.||q.x>s.cfg.w+2.||q.z>s.cfg.w+2.)break;if(solid(q)){hit=0.;break;}}
+  float hit=structureSunRay(start,dir);
   sh+=hit;
  }
- return sh/9.;
+ return (sh>0.&&leafShadow(start,L))?0.:sh/9.;
 }
-bool structureSolid(vec3 q){
- ivec3 c=ivec3(floor(q));
- if(any(lessThan(c,ivec3(0)))||c.x>=int(s.cfg.w)||c.z>=int(s.cfg.w)||c.y>=20)return false;
- int cellIndex=c.x*640+c.z*20+c.y;
- int v=s.cells[cellIndex];if(v==0)return false;
- int t=(v-1)%64,r=(v-1)/64;
- // Exact fast paths: these shapes are independent of local coordinates and rotation.
- if(t==0||t==5||t==18||t==19||t==20)return true;
- if(t==3||t==13||t==15||t==16||t==25||t==27||t==35||t==37||t==40||t==43||t==44||t==45||t==46)return false;
- vec3 f=fract(q);vec2 d=f.xz-.5;
- for(int i=0;i<r;i++)d=vec2(-d.y,d.x);f.xz=d+.5;
- if(t==1)return f.y<.5;if(t==2||t==7||t==14||t==41||t==42)return length(f.xz-.5)<.22;
- if(t==3||t==13||t==15||t==16||t==25||t==27)return false;
- if(t==4)return f.y<1.-f.z;if(t==6)return f.y<ceil((1.-f.z)*4.)/4.;
- if(t==8)return abs(f.z-.5)<.15&&(f.x<.15||f.x>.85||f.y<.25||f.y>.8);
- if(t==9)return abs(f.z-.5)<.15;
- if(t==10)return !(abs(f.x-.5)<.25&&(f.y<.5||length(vec2(f.x-.5,f.y-.5))<.25));
- if(t==11)return f.z<.15;if(t==12)return f.y>.7&&abs(f.z-.5)<.15;
- if(t==17)return f.y<.5;if(t==21)return abs(f.z-.5)<.25;if(t==22)return abs(f.z-.5)<.15;
- if(t==23)return abs(f.z-.5)<.15&&(f.x<.18||f.x>.82||f.y>.85);
- if(t==24)return f.y<.1||(f.y<.5&&max(abs(f.x-.5),abs(f.z-.5))>.4);
- if(t==26)return length(f.xz-.5)<.12&&f.y<.8;
- if(t==28)return dot(f.xz-.5,f.xz-.5)+f.y*f.y<.25;
- if(t==29)return dot(f.xz-.5,f.xz-.5)<.25;
- if(t==30)return f.y<.5+sqrt(max(0.,.25-(f.x-.5)*(f.x-.5)));
- if(t==31)return abs(f.z-.5)<.05;if(t==32||t==33)return abs(f.z-.5)<.15;
- if(t==34)return f.y>.85;if(t==35||t==37||t==40)return false;
- if(t==36)return f.y<ceil((1.-f.z)*8.)/8.;
- if(t==38)return max(abs(f.x-.5),abs(f.z-.5))<.2;
- if(t==39)return f.y<.35&&abs(f.z-.5)<.2&&abs(f.x-.5)<.45;
- return true;
-}
-bool solid(vec3 q){
- ivec3 c=ivec3(floor(q));if(any(lessThan(c,ivec3(0)))||c.x>=int(s.cfg.w)||c.z>=int(s.cfg.w)||c.y>=20)return false;int cellIndex=c.x*640+c.z*20+c.y;
- ivec3 sub=clamp(ivec3(fract(q)*4.),ivec3(0),ivec3(3));int bit=sub.x+sub.z*4+sub.y*16;
- if((s.natureMask[cellIndex*2+bit/32]&(1u<<uint(bit%32)))!=0u)return true;
- return structureSolid(q);
-}
+#include "structure_occlusion.glsl"
 
-vec3 sampleMap(int layer,vec2 uv){return texture(maps,vec3(uv,float(layer))).rgb;}
-float sampleA(int layer,vec2 uv){return texture(maps,vec3(uv,float(layer))).a;}
+vec3 sampleMap(int layer,vec2 uv){return textureLod(maps,vec3(uv,float(layer)),0.).rgb;}
+float sampleA(int layer,vec2 uv){return textureLod(maps,vec3(uv,float(layer)),0.).a;}
 
 // Lush concept-art greens (not washed MC plains yellow-olive)
 vec3 biomeFoliage(vec3 wp){
@@ -87,3 +90,6 @@ vec3 applyBiome(vec3 tex,vec3 biome){
  return biome*clamp(.4+lum*1.1,.35,1.5);
 }
 
+
+vec3 fixtureColor(float power){int kind=int(power/100.);return kind==2?vec3(.15,.85,1.):kind==3?vec3(1.,.14,.55):kind==4?vec3(.30,1.,.42):kind==5?vec3(.35,.8,.85):vec3(1.,.851,.627);}
+float fixturePower(float power){return mod(power,100.);}

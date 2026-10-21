@@ -19,7 +19,7 @@ void blurUiBackgroundReference(){
 #include "ui_blur_roi.inc"
 void destroyUiBackground(){if(uiBackgroundMap)vkUnmapMemory(device,uiBackgroundMemory);if(uiBackgroundBuffer)vkDestroyBuffer(device,uiBackgroundBuffer,nullptr);if(uiBackgroundMemory)vkFreeMemory(device,uiBackgroundMemory,nullptr);uiBackgroundMap=nullptr;uiBackgroundBuffer=VK_NULL_HANDLE;uiBackgroundMemory=VK_NULL_HANDLE;uiBackgroundReady=false;}
 void recordUiBackground(uint32_t index){
- uiBackgroundRecorded=false;if(hideUI||!captureFile.empty()||frames%8)return;
+ uiBackgroundRecorded=false;if(hideUI||!captureFile.empty()||frames%4)return;
  if(uiBackgroundWidth!=extent.width||uiBackgroundHeight!=extent.height||!uiBackgroundMap){destroyUiBackground();uiBackgroundWidth=extent.width;uiBackgroundHeight=extent.height;buffer((VkDeviceSize)extent.width*extent.height*4,VK_BUFFER_USAGE_TRANSFER_DST_BIT,uiBackgroundBuffer,uiBackgroundMemory,&uiBackgroundMap);}
  VkImageMemoryBarrier b{VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER};b.srcAccessMask=VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;b.dstAccessMask=VK_ACCESS_TRANSFER_READ_BIT;b.oldLayout=VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;b.newLayout=VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL;b.srcQueueFamilyIndex=b.dstQueueFamilyIndex=VK_QUEUE_FAMILY_IGNORED;b.image=images[index];b.subresourceRange={VK_IMAGE_ASPECT_COLOR_BIT,0,1,0,1};
  vkCmdPipelineBarrier(command,VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,VK_PIPELINE_STAGE_TRANSFER_BIT,0,0,nullptr,0,nullptr,1,&b);
@@ -28,5 +28,5 @@ void recordUiBackground(uint32_t index){
 }
 void finishUiBackground(){if(!uiBackgroundRecorded)return;
  if(swapFormat==VK_FORMAT_R8G8B8A8_UNORM||swapFormat==VK_FORMAT_R8G8B8A8_SRGB){auto p=(unsigned char*)uiBackgroundMap;for(size_t i=0;i<(size_t)uiBackgroundWidth*uiBackgroundHeight*4;i+=4)std::swap(p[i],p[i+2]);}
- blurUiBackground();uiBackgroundReady=true;for(HWND h:{topPanel,sidePanel,dockPanel,modalPanel})if(h)InvalidateRect(h,nullptr,FALSE);
+ blurUiBackground();uiBackgroundReady=true;for(HWND h:{topPanel,sidePanel,dockPanel,modalPanel})if(h&&IsWindowVisible(h))InvalidateRect(h,nullptr,FALSE);
 }

@@ -17,7 +17,7 @@ void catalogSelfTest(){
  }
  world=World{};world.n=16;
  for(int t=0;t<PieceCount;t++)put(t%16,t/16,0,t,t%4);
- World all=world;std::string nativeExport=exportWorldJson();check(loadWorldJson(nativeExport.c_str()),"native Share JSON reimports");check(memcmp(all.c.data(),world.c.data(),sizeof(Cell)*WorldCells)==0,"native Share retains all new piece IDs");save();world=World{};check(load(),"41-piece binary world loads");
+ world.pipes={{2,3,0,4,2,0,2,1,1},{3,1,0,1,0,2,1,3,0}};World all=world;std::string nativeExport=exportWorldJson();check(loadWorldJson(nativeExport.c_str()),"native Share JSON reimports");check(memcmp(all.c.data(),world.c.data(),sizeof(Cell)*WorldCells)==0,"native Share retains all new piece IDs");check(world.pipes.size()==all.pipes.size()&&memcmp(world.pipes.data(),all.pipes.data(),all.pipes.size()*sizeof(PipeNode))==0,"HTML-compatible Share JSON preserves all pipe fields");save();world=World{};check(load(),"41-piece binary world loads");
  check(memcmp(all.c.data(),world.c.data(),sizeof(Cell)*WorldCells)==0,"all 41 types and rotations survive binary saves");
  std::string json="{\"N\":16,\"c\":[";
  for(int t=0;t<PieceCount;t++){if(t)json+=',';int x=t%16,y=t/16,k=x*1024+y;json+="["+std::to_string(k)+",{\"t\":"+std::to_string(t)+",\"r\":"+std::to_string(t%4)+"}]";}

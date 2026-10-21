@@ -13,7 +13,7 @@ case 34:box(1,.15f,1,0,.425f);break;
 case 35:
  for(float x:{-.4f,-.13f,.13f,.4f})box(.1f,.12f,1,x,.44f,0,5);
  for(float z:{-.35f,0.f,.35f})box(1,.06f,.08f,0,.5f,z,5);break;
-case 36:for(int i=0;i<8;i++)box(1,.125f*(i+1),.125f,0,-.5f+.0625f*(i+1),.4375f-.125f*i);break;
+case 36:for(int i=0;i<8;i++)box(1,.125f*(i+1),.125f,0,-.5f+.0625f*(i+1),.4375f-.125f*i);stairHandrails(stairSideBlocked(-1)?-999.f:-.42f,stairSideBlocked(1)?-999.f:.42f,8);break;
 case 37:cylinder(.01f,.5f,.25f,3);spherePart({0,-.08f,0},.12f,4,false,10,8);break;
 case 38:taperedObelisk();break;
 case 39:box(.9f,.08f,.36f,0,-.18f,0,5);box(.08f,.32f,.3f,-.38f,-.34f,0,5);box(.08f,.32f,.3f,.38f,-.34f,0,5);break;
@@ -44,7 +44,7 @@ case 55: // rain scupper / spout
  box(.4f,.14f,.55f,0,.38f,-.1f);box(.16f,.1f,.4f,0,.3f,-.42f);box(.22f,.08f,.18f,0,.26f,-.55f);break;
 // Brutalism wave 2
 case 56: // pilotis — raised capital, walk under
- cylinder(.26f,.34f,1.83f);box(.85f,.12f,.85f,0,1.94f);break;
+ for(float x:{-.36f,.36f})for(float z:{-.36f,.36f})box(.11f,1.72f,.11f,x,.36f,z);box(.85f,.28f,.85f,0,1.36f);break;
 case 57: // megastep — 2-wide stair mass
  box(2,.5f,1,.5f,-.25f);break;
 case 58: // lightwell — 2×2 plan rim, 2 tall
@@ -61,3 +61,132 @@ case 63:case 64:box(1,1,1,0,0,0,38);break;
 case 65:natureLog();break;
 case 66:natureStump();break;
 case 67:natureMushroom();break;
+// Brutalism wave 3 — concept corridor braces
+case 68:{ // Strut — 2-tall diagonal in XY (portal face). r=0 = brace across a Z-facing opening.
+ // Right-low → left-high; pads seat on +X jamb and under soffit.
+ V a{.58f,-.58f,0.f},b{-.58f,1.58f,0.f},d=norm(b-a),u{0,0,1},v=norm(cross(d,u));
+ float hw=.32f,ht=.26f;auto at=[&](float t,float su,float sv){return a+(b-a)*t+u*(su*hw)+v*(sv*ht);};
+ quad(at(0,-1,-1),at(0,1,-1),at(0,1,1),at(0,-1,1),18);
+ quad(at(1,-1,1),at(1,1,1),at(1,1,-1),at(1,-1,-1),18);
+ quad(at(0,-1,-1),at(0,-1,1),at(1,-1,1),at(1,-1,-1),18);
+ quad(at(0,1,1),at(0,1,-1),at(1,1,-1),at(1,1,1),18);
+ quad(at(0,-1,1),at(0,1,1),at(1,1,1),at(1,-1,1),18);
+ quad(at(0,1,-1),at(0,-1,-1),at(1,-1,-1),at(1,1,-1),18);
+ box(.14f,.55f,.62f,.46f,-.22f,0.f,18); // +X jamb pad
+ box(.55f,.14f,.62f,-.22f,1.46f,0.f,18); // soffit pad
+ break;}
+case 69:box(2,.55f,.72f,.5f,.12f,0,18);break; // Girder — 2-wide thick board-form span
+case 70: // Niche — deep square alcove (stack into pierced piers); open −Z
+ box(.18f,1,.9f,-.41f,0,.05f,18);box(.18f,1,.9f,.41f,0,.05f,18);
+ box(.9f,.18f,.9f,0,.41f,.05f,18);box(.9f,.18f,.9f,0,-.41f,.05f,18);
+ box(1,1,.18f,0,0,.41f,18);break;
+case 71: // Hood — continuous niche jambs + outer lip past −Z (no floating frame)
+ box(.16f,1.f,1.2f,-.42f,0.f,-.1f,18);box(.16f,1.f,1.2f,.42f,0.f,-.1f,18);
+ box(.84f,.16f,1.2f,0.f,.42f,-.1f,18);box(.84f,.16f,1.2f,0.f,-.42f,-.1f,18);
+ box(1.f,1.f,.16f,0.f,0.f,.42f,18);
+ box(.12f,.92f,.32f,-.44f,0.f,-.66f,18);box(.12f,.92f,.32f,.44f,0.f,-.66f,18);
+ box(.92f,.12f,.32f,0.f,.44f,-.66f,18);box(.92f,.12f,.32f,0.f,-.44f,-.66f,18);break;
+case 72:{ // True circular oculus; intentionally a small opening, not a doorway.
+ for(int i=0;i<32;i++){
+  float a=2*PI*i/32,b=2*PI*(i+1)/32;
+  V u{cosf(a),sinf(a),0},v{cosf(b),sinf(b),0};
+  V A=u*(.5f/std::max(fabsf(u.x),fabsf(u.y))),B=v*(.5f/std::max(fabsf(v.x),fabsf(v.y)));
+  V U=u*.32f,W=v*.32f;
+  A.z=B.z=U.z=W.z=.18f;quad(A,U,W,B,18);
+  V C=A,D=B,X=U,Y=W;C.z=D.z=X.z=Y.z=.5f;quad(C,D,Y,X,18);quad(U,X,Y,W,18);quad(A,B,D,C,18);
+ }break;}
+case 73: // Stripe — yellow hazard bands on a board-form face
+ box(1,1,1,0,0,0,18);box(.92f,.11f,.05f,0,.14f,-.48f,41);box(.92f,.11f,.05f,0,-.14f,-.48f,41);break;
+case 74: // Half — half-depth wall slab (front of cell, open toward −Z approach)
+ box(1,1,.5f,0,0,-.25f,18);break;
+case 75:{ // Lilypad — real pack pad mesh over a thin water disc
+ quad({-.4f,-.42f,.4f},{.4f,-.42f,.4f},{.4f,-.42f,-.4f},{-.4f,-.42f,-.4f},9);
+ IvyRandom padRng{natureSeed()+211u};
+ natureModel(nature_clover,{padRng.range(-.12f,.12f),-.40f,padRng.range(-.12f,.12f)},padRng.range(1.05f,1.35f),padRng.range(0,2*PI),false);
+ break;}
+case 76:{ // Grass — meadow / tallgrass cluster (not PSX atlas-on-box)
+ natureGrass((int)(natureSeed()%6),{0,-.42f,0},1.05f,0.f,false);
+ natureGrass((int)((natureSeed()>>3)%6),{.22f,-.40f,-.18f},.95f,1.1f,false);
+ natureGrass((int)((natureSeed()>>7)%6),{-.2f,-.40f,.2f},1.1f,2.2f,true);
+ break;}
+case 77:natureCascade();break;
+case 78: // Flight — continuous 2-wide stair run + side and center rails
+ for(int i=0;i<4;i++)box(2,.25f*(i+1),.25f,.5f,-.5f+.125f*(i+1),.375f-.25f*i);
+ stairHandrails(stairSideBlocked(-1)?-999.f:-.42f,stairSideBlocked(2)?-999.f:1.42f,4,.5f);break;
+case 79: // Amber lamp
+ box(.6f,.07f,.07f,0,.4f,0,42);box(.66f,.04f,.14f,0,.46f,0,3);break;
+case 80: // Cool lamp
+ box(.6f,.07f,.07f,0,.4f,0,43);box(.66f,.04f,.14f,0,.46f,0,3);break;
+case 81: // Ribbed — vertical board ribs on board-form
+ box(1,1,1,0,0,0,18);for(int i=0;i<5;i++)box(.08f,.98f,.06f,-.4f+i*.2f,0,-.48f,18);break;
+case 82:natureGreenWall();break;
+case 83:{ // Lattice — inset −Z grille; bars run to cell edges so tiling merges the carved field
+ bool nL=faceNeighbor(83,-1,0),nR=faceNeighbor(83,1,0),nD=faceNeighbor(83,0,-1),nU=faceNeighbor(83,0,1);
+ const float z=-.38f,d=.28f,t=.07f;
+ box(1.f,1.f,.05f,0,0,-.48f,18); // back plate inset in wall
+ for(int i=0;i<5;i++){
+  float u=-.4f+i*.2f;
+  box(t,1.f,d,u,0,z);
+  box(1.f,t,d,0,u,z);
+ }
+ // Outer lip only where the lattice meets non-lattice wall
+ const float lip=.05f;
+ if(!nU)box(1.f,lip,d,0,.5f-lip*.5f,z,18);
+ if(!nD)box(1.f,lip,d,0,-.5f+lip*.5f,z,18);
+ if(!nL)box(lip,1.f,d,-.5f+lip*.5f,0,z,18);
+ if(!nR)box(lip,1.f,d,.5f-lip*.5f,0,z,18);
+ break;}
+case 84:{ // Glassblock — 3×3 translucent blocks, seated on −Z face
+ for(int iy=0;iy<3;iy++)for(int ix=0;ix<3;ix++)box(.28f,.28f,.22f,-.3f+ix*.3f,-.3f+iy*.3f,-.35f,2);
+ break;}
+case 85: // Embrasure — deep splayed recess, open −Z
+ box(.16f,1,.75f,-.42f,0,.05f,18);box(.16f,1,.75f,.42f,0,.05f,18);
+ box(.68f,.16f,.75f,0,.42f,.05f,18);box(.68f,.16f,.75f,0,-.42f,.05f,18);
+ box(1,1,.14f,0,0,.43f,18);
+ box(.12f,.9f,.28f,-.46f,0,-.48f,18);box(.12f,.9f,.28f,.46f,0,-.48f,18);
+ box(.9f,.12f,.28f,0,.46f,-.48f,18);box(.9f,.12f,.28f,0,-.46f,-.48f,18);break;
+case 86:{ // Real branching sumac bush; three stable placement variants.
+ IvyRandom rng{natureSeed()^0x62u};V root{0,-.49f,0};float a=rng.range(0,2*PI),scale=rng.range(.95f,1.15f);
+ switch(natureSeed()%3){case 0:natureModel(nature_shrub_1,root,scale,a,false);break;case 1:natureModel(nature_shrub_2,root,scale,a,false);break;default:natureModel(nature_shrub_3,root,scale,a,false);}
+ break;}
+case 87:natureHanging(87);break;
+case 88:natureSurfaceCover(88);break;
+case 89:natureSurfaceCover(89);break;
+case 90:natureHanging(90);break;
+case 91:natureSurfaceCover(91);break;
+case 92:natureHanging(92);break;
+case 93: // Opposite slope: high at +Z; normals and collision agree.
+ quad({.5f,-.5f,-.5f},{-.5f,-.5f,-.5f},{-.5f,.5f,.5f},{.5f,.5f,.5f},0);quad({-.5f,-.5f,.5f},{.5f,-.5f,.5f},{.5f,.5f,.5f},{-.5f,.5f,.5f},0);tri({.5f,-.5f,.5f},{.5f,-.5f,-.5f},{.5f,.5f,.5f},0);tri({-.5f,-.5f,-.5f},{-.5f,-.5f,.5f},{-.5f,.5f,.5f},0);quad({.5f,-.5f,.5f},{-.5f,-.5f,.5f},{-.5f,-.5f,-.5f},{.5f,-.5f,-.5f},0);break;
+case 94: // Quadpier — four slender square pillars packed into one cell
+ for(V c:{V{-.2f,0,-.2f},V{.2f,0,-.2f},V{-.2f,0,.2f},V{.2f,0,.2f}})
+  box(.18f,1.f,.18f,c.x,0,c.z);
+ break;
+case 95: // Angle — wall cube flush −Z, luminous aperture aimed down the face
+ box(.34f,.34f,.05f,0,.08f,-.475f,3); // backplate
+ box(.28f,.28f,.22f,0,.08f,-.38f,3);  // housing
+ box(.2f,.03f,.16f,0,-.06f,-.36f,4);  // down-facing emitter
+ break;
+
+case 96: // Two-metre interactive hinged service door.
+ serviceDoorFrame();if(!doorFramePass){int index=idx((int)floorf(origin.x),(int)floorf(origin.y),(int)floorf(origin.z));serviceDoorLeaf(doorAmount(index));}break;
+case 97: // Wall ventilation grille with visible louvres.
+ box(.86f,.70f,.055f,0,0,-.46f,8);box(.74f,.58f,.02f,0,0,-.42f,3);
+ for(int i=0;i<7;i++)box(.70f,.035f,.075f,0,-.25f+i*.08f,-.38f,8);break;
+case 98: // Open ladder cable tray, aligned to merge across neighboring cells.
+ box(1.f,.08f,.035f,0,.3f,-.23f,8);box(1.f,.08f,.035f,0,.3f,.23f,8);
+ for(int i=0;i<5;i++)box(.035f,.035f,.46f,-.4f+i*.2f,.27f,0,8);
+ for(float z:{-.13f,0.f,.13f})box(1.f,.025f,.025f,0,.30f,z,13);break;
+case 99: // Recessed fluorescent ceiling panel.
+ box(.94f,.10f,.94f,0,.43f,0,8);box(.86f,.025f,.86f,0,.367f,0,3);
+ for(float z:{-.25f,0.f,.25f})box(.77f,.028f,.10f,0,.345f,z,4);break;
+case 100: // Green exit pictogram in a wall-mounted housing.
+ box(.88f,.32f,.10f,0,.22f,-.43f,3);box(.78f,.25f,.015f,0,.22f,-.37f,51);
+ box(.36f,.045f,.014f,0,.22f,-.355f,4);tri({.25f,.22f,-.345f},{.10f,.32f,-.345f},{.10f,.12f,-.345f},4);break;
+case 101:case 102: // Cyan / rose neon, with visible supports and dark backing.
+ box(.92f,.32f,.05f,0,.1f,-.46f,3);
+ for(float x:{-.38f,.38f})box(.04f,.24f,.09f,x,.1f,-.40f,8);
+ box(.82f,.035f,.035f,0,.18f,-.34f,t==101?48:49);box(.82f,.035f,.035f,0,.02f,-.34f,t==101?48:49);break;
+case 103: // Industrial terminal, inset screen and keyboard shelf.
+ box(.72f,.65f,.16f,0,.06f,-.41f,8);box(.60f,.43f,.016f,0,.12f,-.32f,3);box(.52f,.34f,.012f,0,.12f,-.304f,50);
+ for(int i=0;i<4;i++)box(.32f-i*.045f,.012f,.007f,-.05f,.23f-i*.065f,-.293f,48);
+ box(.68f,.06f,.30f,0,-.32f,-.30f,8);for(int i=0;i<8;i++)box(.045f,.015f,.10f,-.24f+i*.068f,-.28f,-.23f,3);break;

@@ -1,6 +1,6 @@
 // World-space water shading: continuous ripples, geometric reflections/refraction,
 // absorption and a thin shoreline. Bounded grid traces reuse the scene collision mask.
-int waterCellType(vec3 q){ivec3 c=ivec3(floor(q));if(any(lessThan(c,ivec3(0)))||c.x>=int(s.cfg.w)||c.z>=int(s.cfg.w)||c.y>=20)return -1;int v=s.cells[c.x*640+c.z*20+c.y];return v==0?-1:(v-1)%128;} // PieceEncodingStride=128
+int waterCellType(vec3 q){ivec3 c=ivec3(floor(q));if(any(lessThan(c,ivec3(0)))||c.x>=int(s.cfg.w)||c.z>=int(s.cfg.w)||c.y>=20)return -1;int v=s.cells[c.x*1280+c.z*20+c.y];return v==0?-1:(v-1)%128;} // MaxPlot=64, PieceEncodingStride=128
 bool waterStructure(vec3 q){
  int t=waterCellType(q);if(t<0||t==14)return false;
  // Pool basins (24): only rim/floor collide — open water volume must not self-hit
@@ -28,16 +28,23 @@ bool waterStructureTrace(vec3 start,vec3 direction,float limit,out vec3 hit,out 
  distance=limit;hit=start+direction*limit;normal=vec3(0,1,0);return false;
 }
 vec3 waterHitColor(vec3 q,vec3 N){
- int type=waterCellType(q);vec2 uv=abs(N.y)>.65?q.xz:abs(N.x)>.65?q.zy:q.xy;
+ int type=waterCellType(q);ivec3 cell=ivec3(clamp(floor(q),vec3(0),vec3(s.cfg.w-1.,19.,s.cfg.w-1.)));int code=s.cells[cell.x*1280+cell.z*20+cell.y];int recipe=code>0?((code-1)/32768)%512:0;vec3 sp=recipe>0?surfacePoint(q,recipe):q;vec3 sn=recipe>0?normalize(surfacePoint(N,recipe)):N;int style=recipe&31;vec2 uv=abs(N.y)>.65?q.xz:abs(N.x)>.65?q.zy:q.xy;
  vec3 base;
  if(type<0&&q.y>.05)base=vec3(.095,.12,.077); // foliage shadow voxels above occupied cells
  else if(type==5||type==17||type==14||type==15)base=vec3(.095,.14,.075);
  else if(type==19||type==39||type==35)base=sampleMap(4,uv)*.8;
  else if(type==20||type==11||type==31)base=sampleMap(5,uv)*.5;
- else base=sampleMap(type==18?3:0,uv);
+ else if(type==96)base=vec3(.25,.31,.29);
+ else if(type==18){vec4 brick=sampleBrickLod(q,N,0,0.);base=brick.rgb*mix(.94,1.,brick.a);}
+ else base=sampleMap(0,uv);
+ if(style>0){int material=surfaceBase(style,0);vec2 su=abs(sn.y)>.65?sp.xz:abs(sn.x)>.65?sp.zy:sp.xy;
+  if(material==7){vec4 brick=sampleBrickLod(sp,sn,recipe,0.);base=brick.rgb*mix(.94,1.,brick.a);}
+  else if(material==5||material==8)base=sampleMap(material==5?4:5,su);
+  else base=sampleMap(material==18?24:material==38?25:material==39?32:0,su*(material==0?2.:1.));
+ }
  vec3 light=vec3(.27,.29,.30)*s.lighting.x+vec3(.8,.78,.7)*max(dot(N,normalize(s.sun.xyz)),0.)*s.sun.w;
  vec3 color=base*light;
- for(int i=0;i<8;i++){if(s.lamps[i].w<=0.)continue;vec3 d=s.lamps[i].xyz-q;float ds=dot(d,d);color+=base*vec3(1.,.85,.63)*s.lamps[i].w/(1.+ds)*.65;}
+ for(int i=0;i<16;i++){float lw=s.lamps[i].w;if(lw<=0.)continue;bool ang=lw>=100.&&lw<200.;float inten=fixturePower(lw);vec3 d=s.lamps[i].xyz-q;float ds=dot(d,d);if(ang&&d.y<=0.)continue;color+=base*fixtureColor(lw)*inten/(1.+ds)*.65;}
  return color;
 }
 bool waterTrace(vec3 start,vec3 direction,float limit,out vec3 hit,out vec3 normal,out float distance,out vec3 color){
@@ -46,7 +53,7 @@ bool waterTrace(vec3 start,vec3 direction,float limit,out vec3 hit,out vec3 norm
  if(waterPlantTrace(start,direction,nearest,plantHit,plantNormal,plantColor,ambient)){
   hit=plantHit;normal=plantNormal;distance=nearest;
   float diffuse=abs(dot(normal,normalize(s.sun.xyz)));vec3 light=vec3(.27,.29,.30)*s.lighting.x+vec3(.8,.78,.7)*diffuse*s.sun.w;
-  color=plantColor*light*ambient;for(int i=0;i<8;i++){if(s.lamps[i].w<=0.)continue;vec3 d=s.lamps[i].xyz-hit;color+=plantColor*vec3(1.,.85,.63)*s.lamps[i].w/(1.+dot(d,d))*.65;}
+  color=plantColor*light*ambient;for(int i=0;i<16;i++){float lw=s.lamps[i].w;if(lw<=0.)continue;bool ang=lw>=100.&&lw<200.;float inten=fixturePower(lw);vec3 d=s.lamps[i].xyz-hit;if(ang&&d.y<=0.)continue;color+=plantColor*vec3(1.,.85,.63)*inten/(1.+dot(d,d))*.65;}
   return true;
  }
  return structure;
@@ -57,7 +64,7 @@ vec3 renderWater(vec3 point,vec3 geometricNormal){
                 sin(dot(point.xz,vec2(1.3,-2.4))+time*.63)*.026+sin(dot(point.xz,vec2(5.7,3.9))+time*1.3)*.014);
  vec2 rainCell=fract(point.xz*1.4)-.5;float rainId=fract(sin(dot(floor(point.xz*1.4),vec2(127.1,311.7)))*43758.5453);
  float life=fract(time*.75+rainId),radius=length(rainCell);float ring=sin((radius-life*.55)*70.)*exp(-pow((radius-life*.4)*19.,2.))*(1.-life);
- wave+=rainCell/max(radius,.01)*ring*.024*s.lighting.y;
+ wave+=rainCell/max(radius,.01)*ring*.024*step(.9,s.lighting.y);
  vec3 N=normalize(geometricNormal+vec3(wave.x,0,wave.y));bool below=dot(geometricNormal,view)<0.;if(below)N=-N;
  vec3 reflectionDirection=reflect(-view,N),refractionDirection=refract(-view,N,below?1.333:1./1.333);
  vec3 hit,normal,rayColor;float distance;
@@ -78,7 +85,7 @@ vec3 renderWater(vec3 point,vec3 geometricNormal){
  vec3 color=mix(body,reflected,clamp(fresnel+.10,0.,1.));
  vec3 halfVector=normalize(normalize(s.sun.xyz)+view);
  color+=vec3(1.,.96,.86)*pow(max(dot(N,halfVector),0.),220.)*s.sun.w*.65;
- for(int i=0;i<8;i++){if(s.lamps[i].w<=0.)continue;vec3 d=s.lamps[i].xyz-point;float ds=dot(d,d);vec3 H=normalize(normalize(d)+view);color+=vec3(1.,.85,.63)*pow(max(dot(N,H),0.),90.)*s.lamps[i].w/(1.+ds)*.45;}
+ for(int i=0;i<16;i++){float lw=s.lamps[i].w;if(lw<=0.)continue;bool ang=lw>=100.&&lw<200.;float inten=fixturePower(lw);vec3 d=s.lamps[i].xyz-point;float ds=dot(d,d);if(ang&&d.y<=0.)continue;vec3 H=normalize(normalize(d)+view);color+=vec3(1.,.85,.63)*pow(max(dot(N,H),0.),90.)*inten/(1.+ds)*.45;}
  // Only actual solid banks create an edge; adjacent water tiles share one surface.
  if(geometricNormal.y>.7){
   float bank=max(max(float(waterStructure(point+vec3(.13,0,0))),float(waterStructure(point-vec3(.13,0,0)))),max(float(waterStructure(point+vec3(0,0,.13))),float(waterStructure(point-vec3(0,0,.13)))));
@@ -86,4 +93,16 @@ vec3 renderWater(vec3 point,vec3 geometricNormal){
   color=mix(color,vec3(.29,.34,.31)*(s.lighting.x+.2),bank*broken*.16);
  }
  float fog=1.-exp(-length(s.eye.xyz-point)*s.cfg.y);color=mix(color,s.sky.rgb,fog);if(s.lighting.z>0.)color=mix(color,vec3(.018,.055,.051),1.-exp(-length(s.eye.xyz-point)*.16));return color;
+}
+
+// A falling sheet refracts the surface directly behind it, without pond-depth absorption.
+vec3 renderFlowWater(vec3 point,vec3 geometricNormal){
+ vec3 V=normalize(s.eye.xyz-point),hit,N,back;float distance;
+ if(!waterTrace(point-V*.035,-V,6.,hit,N,distance,back))back=waterSky(-V);
+ float time=s.eye.w,x=abs(geometricNormal.z)>.5?point.x:point.z;
+ float thread=pow(.5+.5*sin(x*76.+sin(point.y*3.+time)*.7),10.);
+ float flow=.5+.5*sin(point.y*19.+time*6.+sin(x*24.)*1.2);
+ float streak=thread*(.35+flow*.65);vec3 color=back*vec3(.52,.68,.72)+vec3(.02,.04,.045);
+ color+=vec3(.4,.47,.49)*streak*(s.lighting.x+.5);
+ float fog=1.-exp(-length(s.eye.xyz-point)*s.cfg.y);return mix(color,s.sky.rgb,fog);
 }

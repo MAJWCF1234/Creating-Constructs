@@ -6,8 +6,8 @@ static const int NetCorners[8][3]={{0,0,0},{1,0,0},{0,1,0},{1,1,0},{0,0,1},{1,0,
 static const int NetEdges[12][2]={{0,1},{2,3},{4,5},{6,7},{0,2},{1,3},{4,6},{5,7},{0,4},{1,5},{2,6},{3,7}};
 static const int NetFacesC[6][4]={{0,1,3,2},{4,5,7,6},{0,1,5,4},{2,3,7,6},{0,2,6,4},{1,3,7,5}};
 static const int NetFacesE[6][4]={{0,5,1,4},{2,7,3,6},{0,9,2,8},{1,11,3,10},{4,10,6,8},{5,11,7,9}};
-inline int netPack(int x,int y,int z){return (x<<10)|(z<<5)|y;}
-inline void netUnpack(int k,int& x,int& y,int& z){x=k>>10;z=(k>>5)&31;y=k&31;}
+inline int netPack(int x,int y,int z){return ((x+4)<<13)|((z+4)<<6)|(y+4);}
+inline void netUnpack(int k,int& x,int& y,int& z){x=(k>>13)-4;z=((k>>6)&127)-4;y=(k&63)-4;}
 bool netIsMoss(int t){return t==5;}
 bool netIsRock(int t){return t==63||t==64;}
 bool netSoftProp(int t){
@@ -143,7 +143,7 @@ void netEmitIsland(const std::vector<NetCell>& group,const NetProfile& P,bool(*r
  auto ev=[&](int x,int y,int z,int edge)->int{if(x<0||y<0||z<0||x>=cx||y>=cy||z>=cz)return -1;return edgeVerts[cidx(x,y,z)*12+edge];};
  int mat=(int)P.mat;
  auto addQuad=[&](int a,int b,int c,int d,bool front){
-  if(a<0||b<0||c<0||d<0)return;V A=positions[a],B=positions[b],C=positions[c],D=positions[d];origin={};turn=0;ambient=1;
+  if(a<0||b<0||c<0||d<0)return;V A=positions[a],B=positions[b],C=positions[c],D=positions[d];origin={};turn=0;ambient=1;V center=(A+B+C+D)*.25f;int cx=(int)floorf(center.x),cy=(int)floorf(center.y),cz=(int)floorf(center.z);activeSurface=inb(cx,cy,cz)?surfaceAt(idx(cx,cy,cz)):0;
   if(front){tri(A,B,C,mat);tri(A,C,D,mat);}else{tri(A,C,B,mat);tri(A,D,C,mat);}
  };
  for(int z=1;z<snz-1;z++)for(int y=1;y<sny-1;y++)for(int x=0;x<snx-1;x++){
@@ -173,5 +173,5 @@ void netEmitFamily(bool(*isFamily)(int),const NetProfile& P,bool(*rigid)(int)){
   netEmitIsland(group,P,rigid);
  }
 }
-void emitMossSurfaceNets(){netEmitFamily(netIsMoss,netMossProfile(),mossRigidType);}
-void emitRockSurfaceNets(){netEmitFamily(netIsRock,netRockProfile(),rockRigidType);}
+void emitMossSurfaceNets(){netEmitFamily(netIsMoss,netMossProfile(),mossRigidType);activeSurface=0;}
+void emitRockSurfaceNets(){netEmitFamily(netIsRock,netRockProfile(),rockRigidType);activeSurface=0;}

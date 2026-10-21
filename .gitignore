@@ -16,3 +16,7 @@ output/
 Thumbs.db
 Desktop.ini
 .DS_Store
+
+# Python tool caches
+__pycache__/
+*.py[cod]

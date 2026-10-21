@@ -222,11 +222,19 @@ models[-1] = ("mushroom_1", models[-1][1])
 obj("mushroom_n_2", lambda m: bark)
 models[-1] = ("mushroom_2", models[-1][1])
 
+# Three compact sumac bushes from the same licensed local plant pack.
+for i in range(1,4):
+    glb(f"rhus_typhina_small_0{i}.glb", f"shrub_{i}")
+assert len(textures)==16, "Update shader texture-layer constants if the nature atlas count changes"
+
 header = [
     "// Converted from the user local Retro Official packs; see assets/nature/manifest.json.",
     "struct NatureVertex {V p,n;float u,v;int material;};",
 ]
 for name, a in models:
+    triangles=a.reshape(-1,3,9)
+    area=np.linalg.norm(np.cross(triangles[:,1,:3]-triangles[:,0,:3],triangles[:,2,:3]-triangles[:,0,:3]),axis=1)
+    a=triangles[area>1e-6].reshape(-1,9)
     header.append(f"const NatureVertex nature_{name}[] = {{")
     for v in a:
         f = (

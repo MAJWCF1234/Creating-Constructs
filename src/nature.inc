@@ -14,9 +14,9 @@ void stampNature(V a,V b,V c,const NatureVertex& A,const NatureVertex& B,const N
   if(naturePixels[A.material-22][(iy*128+ix)*4+3]>=128)natureVoxel(a*w+b*u+c*v);
  }
 }
-template<size_t Count>void natureModel(const NatureVertex(&mesh)[Count],V base,float scale,float angle,bool shadow=true,float width=1){
+template<size_t Count>void natureModel(const NatureVertex(&mesh)[Count],V base,float scale,float angle,bool shadow=true,float width=1,bool hanging=false){
  float ca=cosf(angle),sa=sinf(angle);auto rotate=[&](V p){return V{p.x*ca+p.z*sa,p.y,-p.x*sa+p.z*ca};};
- for(size_t i=0;i<Count;i+=3){V pos[3],normal[3];for(int j=0;j<3;j++){pos[j]=transform(base+rotate(V{mesh[i+j].p.x*width,mesh[i+j].p.y,mesh[i+j].p.z*width})*scale);normal[j]=transformNormal(rotate(mesh[i+j].n));}
+ for(size_t i=0;i<Count;i+=3){V pos[3],normal[3];for(int j=0;j<3;j++){float flip=hanging?-1.f:1.f;pos[j]=transform(base+rotate(V{mesh[i+j].p.x*width*flip,mesh[i+j].p.y*flip,mesh[i+j].p.z*width})*scale);V n=mesh[i+j].n;n.x*=flip;n.y*=flip;normal[j]=transformNormal(rotate(n));}
   // Suppress foliage buried in adjacent authored structure, preserving its openings.
   if(!natureIsBark(mesh[i].material)&&!ghostMode&&solidAt((pos[0]+pos[1]+pos[2])*(1.f/3)))continue;
   if(shadow)stampNature(pos[0],pos[1],pos[2],mesh[i],mesh[i+1],mesh[i+2]);
@@ -58,6 +58,12 @@ void natureFern(int variant,V root,float scale,float angle){
 void natureGrass(int variant,V root,float scale,float angle,bool tall){
  if(tall){if(variant&1)natureModel(nature_tallgrass_2,root,scale,angle,false);else natureModel(nature_tallgrass,root,scale,angle,false);}
  else {if(variant&1)natureModel(nature_meadow_2,root,scale,angle,false);else natureModel(nature_meadow,root,scale,angle,false);}
+}
+void natureVariantMesh(int variant){
+ V root{0,-.49f,0};switch(variant){
+ case 0:natureModel(nature_bracken,root,1,0,false);break;case 1:natureModel(nature_bracken_2,root,1,0,false);break;case 2:natureModel(nature_bracken_3,root,1,0,false);break;
+ case 3:natureModel(nature_meadow,root,1,0,false);break;case 4:natureModel(nature_meadow_2,root,1,0,false);break;case 5:natureModel(nature_tallgrass,root,1,0,false);break;case 6:natureModel(nature_tallgrass_2,root,1,0,false);break;
+ case 7:natureModel(nature_dogbane,root,1,0,false);break;case 8:natureModel(nature_dogbane_2,root,1,0,false);break;case 9:natureModel(nature_clover,root,1,0,false);break;case 10:natureModel(nature_aster,root,1,0,false);break;case 11:natureModel(nature_goldenrod,root,1,0,false);break;case 12:natureModel(nature_shrub_1,root,1,0,false);break;case 13:natureModel(nature_shrub_2,root,1,0,false);break;case 14:natureModel(nature_shrub_3,root,1,0,false);break;case 15:natureModel(nature_birch_1,root,.6f,0,false);break;case 16:natureModel(nature_birch_2,root,.6f,0,false);break;case 17:natureModel(nature_pine_1,root,.6f,0,false);break;case 18:natureModel(nature_pine_2,root,.6f,0,false);break;case 19:natureModel(nature_mushroom_1,root,.7f,0,false);break;default:natureModel(nature_mushroom_2,root,.7f,0,false);break;}
 }
 void natureUnderstory(float height,bool planter){
  IvyRandom rng{natureSeed()^319u};

@@ -3,7 +3,9 @@ void spherePart(V center,float radius,int material,bool hemisphere,int slices,in
  for(int j=0;j<rings;j++)for(int i=0;i<slices;i++){
   float u=low+(PI/2-low)*j/rings,v=low+(PI/2-low)*(j+1)/rings,a=i*2*PI/slices,b=(i+1)*2*PI/slices;
   auto p=[&](float th,float ph){return center+V{cosf(th)*cosf(ph),sinf(ph),sinf(th)*cosf(ph)}*radius;};
-  quad(p(b,u),p(a,u),p(a,v),p(b,v),material);
+  if(!hemisphere&&j==0)tri(p(b,u),p(a,v),p(b,v),material);
+  else if(j==rings-1)tri(p(b,u),p(a,u),p(a,v),material);
+  else quad(p(b,u),p(a,u),p(a,v),p(b,v),material);
  }
 }
 void roundVault(){

@@ -10,7 +10,7 @@ float foliageBits(uint32_t bits){float value;memcpy(&value,&bits,4);return value
 void foliageBuildNode(size_t begin,size_t end){
  uint32_t index=(uint32_t)foliageNodes.size();foliageNodes.push_back({});V lo{1e6f,1e6f,1e6f},hi{-1e6f,-1e6f,-1e6f},clo=lo,chi=hi;
  for(size_t i=begin;i<end;i++){auto& t=foliageTriangles[i];lo=foliageMin(lo,t.lo);hi=foliageMax(hi,t.hi);clo=foliageMin(clo,t.center);chi=foliageMax(chi,t.center);}
- foliageNodes[index].lo=lo-V{.021f,.002f,.01f};foliageNodes[index].hi=hi+V{.021f,.002f,.01f};
+ foliageNodes[index].lo=lo-V{.06f,.002f,.026f};foliageNodes[index].hi=hi+V{.06f,.002f,.026f};
  if(end-begin<=4)foliageNodes[index].packed=((uint32_t)begin<<3)|(uint32_t)(end-begin);
  else {V extent=chi-clo;int axis=extent.y>extent.x?1:0;if(extent.z>(axis==0?extent.x:extent.y))axis=2;size_t mid=(begin+end)/2;
   std::nth_element(foliageTriangles.begin()+begin,foliageTriangles.begin()+mid,foliageTriangles.begin()+end,[axis](const FoliageTriangle& a,const FoliageTriangle& b){return axis==0?a.center.x<b.center.x:axis==1?a.center.y<b.center.y:a.center.z<b.center.z;});
@@ -33,7 +33,7 @@ void buildFoliageTrace(){
  }
  // A conservative 1 m occupancy grid rejects empty water rays before BVH traversal.
  std::array<uint32_t,1400> occupancy{};
- for(auto t:foliageTriangles){int x0=std::clamp((int)floorf(t.lo.x-.021f)+4,0,39),x1=std::clamp((int)floorf(t.hi.x+.021f)+4,0,39),y0=std::clamp((int)floorf(t.lo.y)+2,0,27),y1=std::clamp((int)floorf(t.hi.y)+2,0,27),z0=std::clamp((int)floorf(t.lo.z-.01f)+4,0,39),z1=std::clamp((int)floorf(t.hi.z+.01f)+4,0,39);
+ for(auto t:foliageTriangles){int x0=std::clamp((int)floorf(t.lo.x-.06f)+4,0,39),x1=std::clamp((int)floorf(t.hi.x+.06f)+4,0,39),y0=std::clamp((int)floorf(t.lo.y)+2,0,27),y1=std::clamp((int)floorf(t.hi.y)+2,0,27),z0=std::clamp((int)floorf(t.lo.z-.026f)+4,0,39),z1=std::clamp((int)floorf(t.hi.z+.026f)+4,0,39);
   for(int x=x0;x<=x1;x++)for(int z=z0;z<=z1;z++)for(int y=y0;y<=y1;y++){int bit=x*1120+z*28+y;occupancy[bit/32]|=1u<<(bit%32);}
  }
  foliageRecords[0].w=foliageBits((uint32_t)foliageRecords.size());for(int i=0;i<1400;i+=4)foliageRecords.push_back({foliageBits(occupancy[i]),foliageBits(occupancy[i+1]),foliageBits(occupancy[i+2]),foliageBits(occupancy[i+3])});

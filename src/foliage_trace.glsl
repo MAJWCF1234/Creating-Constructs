@@ -1,5 +1,8 @@
+#ifndef FOLIAGE_GEOMETRY_DECLARED
+#define FOLIAGE_GEOMETRY_DECLARED
 layout(std430,binding=2) readonly buffer FoliageGeometry {vec4 records[];} foliage;
-vec3 waterPlantWind(vec3 p,int material){if(material>=22&&material!=23){float w=sin(s.eye.w*1.3+p.x*.7+p.z)*.014;p.x+=w;p.z+=w*.4;}return p;}
+#endif
+vec3 waterPlantWind(vec3 p,int material){bool bark=material==23||material==32||material==33||material==35;if(material>=22&&material<38&&!bark){float amp=.014*(s.lighting.y>.4?2.6:1.)*(1.+s.lighting.w*.4);float w=sin(s.eye.w*1.3+p.x*.7+p.z)*amp;p.x+=w;p.z+=w*.4;}return p;}
 bool waterPlantBox(vec3 start,vec3 invDirection,vec3 lo,vec3 hi,float maximum){vec3 a=(lo-start)*invDirection,b=(hi-start)*invDirection;vec3 near=min(a,b),far=max(a,b);return max(max(near.x,near.y),max(near.z,0.))<=min(min(far.x,far.y),min(far.z,maximum));}
 bool waterMayHitPlant(vec3 start,vec3 direction,vec3 inverse,float maximum){
  vec3 a=(vec3(-4,-2,-4)-start)*inverse,b=(vec3(36,26,36)-start)*inverse,near=min(a,b),far=max(a,b);float entry=max(0.,max(near.x,max(near.y,near.z))),exit=min(maximum,min(far.x,min(far.y,far.z)));if(entry>exit)return false;

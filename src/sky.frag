@@ -4,12 +4,12 @@
 layout(location=0) in vec2 uv;
 layout(location=0) out vec4 color;
 layout(std430,binding=0) readonly buffer State {
- mat4 vp;vec4 eye;vec4 sun;vec4 sky;vec4 cfg;vec4 lamps[8];vec4 atmos;vec4 lighting;int cells[20480];uint natureMask[];
+ mat4 vp;vec4 eye;vec4 sun;vec4 sky;vec4 cfg;vec4 lamps[16];vec4 atmos;vec4 lighting;int cells[81920];uint natureMask[];
 } s;
 
 float hash21(vec2 p){return fract(sin(dot(p,vec2(127.1,311.7)))*43758.5453);}
 float noise2(vec2 p){
- vec2 i=floor(p),f=fract(p);f=f*f*(3.-2.*f);
+ vec2 i=floor(p),f=fract(p);f=f*f*f*(f*(f*6.-15.)+10.);
  float a=hash21(i),b=hash21(i+vec2(1,0)),c=hash21(i+vec2(0,1)),d=hash21(i+vec2(1,1));
  return mix(mix(a,b,f.x),mix(c,d,f.x),f.y);
 }
@@ -19,7 +19,7 @@ float fbm2(vec2 p){
 }
 float hash31(vec3 p){return fract(sin(dot(p,vec3(127.1,311.7,74.7)))*43758.5453);}
 float noise3(vec3 p){
- vec3 i=floor(p),f=fract(p);f=f*f*(3.-2.*f);
+ vec3 i=floor(p),f=fract(p);f=f*f*f*(f*(f*6.-15.)+10.);
  float n000=hash31(i),n100=hash31(i+vec3(1,0,0)),n010=hash31(i+vec3(0,1,0)),n110=hash31(i+vec3(1,1,0));
  float n001=hash31(i+vec3(0,0,1)),n101=hash31(i+vec3(1,0,1)),n011=hash31(i+vec3(0,1,1)),n111=hash31(i+vec3(1,1,1));
  return mix(mix(mix(n000,n100,f.x),mix(n010,n110,f.x),f.y),mix(mix(n001,n101,f.x),mix(n011,n111,f.x),f.y),f.z);
@@ -35,14 +35,14 @@ void main(){
  float h=clamp(vp.y,0.,1.);
  float time=s.eye.w;
  float night=s.sky.w;
- float raining=s.lighting.y;
+ float raining=step(.9,s.lighting.y);
  vec3 sunD=normalize(s.sun.xyz);
  vec3 top=s.atmos.rgb,hor=s.sky.rgb;
 
  // Base sky gradient + soft 2D cloud film
  float cl=0.,am=.5;vec2 q=vp.xz/(vp.y+.35)*1.5;
  for(int i=0;i<4;i++){
-  vec2 ip=floor(q);vec2 f=fract(q);f=f*f*(3.-2.*f);
+  vec2 ip=floor(q);vec2 f=fract(q);f=f*f*f*(f*(f*6.-15.)+10.);
   float a0=fract(sin(dot(ip,vec2(12.9,78.2)))*43758.5);
   float b=fract(sin(dot(ip+vec2(1.,0.),vec2(12.9,78.2)))*43758.5);
   float c2=fract(sin(dot(ip+vec2(0.,1.),vec2(12.9,78.2)))*43758.5);
@@ -58,22 +58,21 @@ void main(){
   float thick=55.+raining*35.;
   float tEnter=cloudH/max(vp.y,.02);
   float tExit=(cloudH+thick)/max(vp.y,.02);
-  tEnter=clamp(tEnter,0.,900.);tExit=clamp(tExit,tEnter,950.);
-  float steps=mix(10.,14.,1.-night);
-  float densAccum=0.,lightAccum=0.,dt=(tExit-tEnter)/steps;
+  tEnter=clamp(tEnter,0.,12000.);tExit=clamp(tExit,tEnter,14000.);
+  const int steps=32;
+  float densAccum=0.,lightAccum=0.,dt=(tExit-tEnter)/float(steps);
   vec3 wind=vec3(time*.018,0.,time*.011);
-  float cover=mix(.42,.72,raining)*(1.-night*.75);
-  for(int i=0;i<14;i++){
-   if(float(i)>=steps)break;
-   float t=tEnter+(float(i)+.5)*dt;
-   vec3 p=vp*t+wind*40.;
+  float cover=mix(.42,.78,max(raining,s.lighting.w))*(1.-night*.75);
+  for(int i=0;i<steps;i++){
+   float t=tEnter+(float(i)+.5)*dt;vec3 p=vp*t+wind*40.;
    float n=fbm3(p*.0075);
    float shape=smoothstep(1.-cover,1.05-cover*.35,n+fbm2(p.xz*.004)*.15);
    float h01=clamp((t*vp.y-cloudH)/thick,0.,1.);
    shape*=smoothstep(0.,.18,h01)*smoothstep(1.,.55,h01);
-   densAccum+=shape*(1.-densAccum)*.22;
-   float sunOcclusion=smoothstep(.2,.9,n);
-   lightAccum+=shape*exp(-sunOcclusion*2.2)*(1.-densAccum);
+   float alpha=1.-exp(-shape*.045*dt);
+   float sunOcclusion=clamp(noise3((p+sunD*22.)*.015)-noise3(p*.015)+.45,0.,1.);
+   lightAccum+=alpha*exp(-sunOcclusion*1.6)*(1.-densAccum);
+   densAccum+=alpha*(1.-densAccum);
   }
   vec3 sunCol=mix(vec3(1.,.86,.68),vec3(.55,.62,.72),raining);
   vec3 cloudLit=mix(hor*.55,sunCol,clamp(lightAccum*1.6,0.,1.));

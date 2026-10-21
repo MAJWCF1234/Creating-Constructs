@@ -1,5 +1,5 @@
 HBITMAP pieceThumbs[PieceCount]{};
-COLORREF thumbMaterial(int m){if(m>=22&&m!=23)return RGB(103,116,71);if(m==23)return RGB(81,69,48);if(m==1||m==6||m==16||m==17||m==19||m==20)return RGB(97,137,66);if(m==2)return RGB(137,186,201);if(m==4)return RGB(255,224,155);if(m==5||m==15)return RGB(137,98,65);if(m==7)return RGB(141,77,58);if(m==3||m==8||m==13||m==21)return RGB(82,91,96);if(m==9)return RGB(50,114,132);return RGB(177,176,165);}
+COLORREF thumbMaterial(int m){m=decodedSurfaceMaterial(m);if(m==52)return RGB(86,105,98);if(m==48)return RGB(25,205,255);if(m==49)return RGB(255,35,100);if(m==50)return RGB(15,65,70);if(m==51)return RGB(20,135,45);if(m>=22&&m!=23)return RGB(103,116,71);if(m==23)return RGB(81,69,48);if(m==1||m==6||m==16||m==17||m==19||m==20)return RGB(97,137,66);if(m==2)return RGB(137,186,201);if(m==4)return RGB(255,224,155);if(m==5||m==15)return RGB(137,98,65);if(m==7)return RGB(141,77,58);if(m==3||m==8||m==13||m==21)return RGB(82,91,96);if(m==9)return RGB(50,114,132);return RGB(177,176,165);}
 void buildThumbnails(){
  World savedWorld=world;V savedOrigin=origin;int savedTurn=turn;float savedAmbient=ambient;
  V view=norm(V{1,.8f,1.2f}),R=norm(cross({0,1,0},view)),U=cross(view,R);

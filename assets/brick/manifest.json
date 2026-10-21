@@ -1,0 +1,78 @@
+[
+  {
+    "name": "side",
+    "source": "O:\\Assets\\Textures\\1_basic_refined\\1_stone\\1_clay\\lime_mortar_red_clay_brick_xt646.png"
+  },
+  {
+    "name": "top",
+    "source": "O:\\Assets\\Textures\\1_basic_refined\\1_stone\\1_clay\\lime_mortar_red_clay_brick_topbottom_7o0c4.png"
+  },
+  {
+    "name": "mossy_side",
+    "source": "O:\\Assets\\Textures\\1_basic_refined\\1_stone\\1_clay\\mossy_lime_mortar_red_clay_brick_cf9t2.png"
+  },
+  {
+    "name": "mossy_top",
+    "source": "O:\\Assets\\Textures\\1_basic_refined\\1_stone\\1_clay\\mossy_lime_mortar_red_clay_brick_topbottom_odt0j.png"
+  },
+  {
+    "name": "stairs",
+    "source": "O:\\Assets\\Textures\\1_basic_refined\\1_stone\\1_clay\\lime_mortar_red_clay_brick_stairs_vbjk3.png"
+  },
+  {
+    "name": "stairs_top",
+    "source": "O:\\Assets\\Textures\\1_basic_refined\\1_stone\\1_clay\\lime_mortar_red_clay_brick_stairs_top_wep2z.png"
+  },
+  {
+    "name": "arch_1",
+    "source": "O:\\Assets\\Textures\\1_basic_refined\\1_stone\\1_clay\\lime_mortar_red_clay_brick_arch\\1_rxa86.png"
+  },
+  {
+    "name": "arch_2",
+    "source": "O:\\Assets\\Textures\\1_basic_refined\\1_stone\\1_clay\\lime_mortar_red_clay_brick_arch\\2_1evza.png"
+  },
+  {
+    "name": "arch_3",
+    "source": "O:\\Assets\\Textures\\1_basic_refined\\1_stone\\1_clay\\lime_mortar_red_clay_brick_arch\\3_5fusg.png"
+  },
+  {
+    "name": "arch_keystone",
+    "source": "O:\\Assets\\Textures\\1_basic_refined\\1_stone\\1_clay\\lime_mortar_red_clay_brick_arch\\keystones_gb5vk.png"
+  },
+  {
+    "name": "arch_mortar",
+    "source": "O:\\Assets\\Textures\\1_basic_refined\\1_stone\\1_clay\\lime_mortar_red_clay_brick_arch\\mortar_jmk9h.png"
+  },
+  {
+    "name": "tudor_narrow_1",
+    "source": "O:\\Assets\\Textures\\2_advanced_refined\\4_tudor\\lime_mortar_red_clay_brick_with_tudor_narrow_diagonal_frames_1_f47z7.png"
+  },
+  {
+    "name": "tudor_narrow_2",
+    "source": "O:\\Assets\\Textures\\2_advanced_refined\\4_tudor\\lime_mortar_red_clay_brick_with_tudor_narrow_diagonal_frames_2_ywpk0.png"
+  },
+  {
+    "name": "tudor_diag_up",
+    "source": "O:\\Assets\\Textures\\2_advanced_refined\\4_tudor\\lime_mortar_red_clay_brick_with_tudor_diagonal_upwards_frame_j2lmo.png"
+  },
+  {
+    "name": "tudor_diag_1",
+    "source": "O:\\Assets\\Textures\\2_advanced_refined\\4_tudor\\lime_mortar_red_clay_brick_with_tudor_diagonal_frame_1_g91tn.png"
+  },
+  {
+    "name": "tudor_diag_2",
+    "source": "O:\\Assets\\Textures\\2_advanced_refined\\4_tudor\\lime_mortar_red_clay_brick_with_tudor_diagonal_frame_2_yz3px.png"
+  },
+  {
+    "name": "tudor_diag_down",
+    "source": "O:\\Assets\\Textures\\2_advanced_refined\\4_tudor\\lime_mortar_red_clay_brick_with_tudor_diagonal_downwards_frame_us00f.png"
+  },
+  {
+    "name": "tudor_cross",
+    "source": "O:\\Assets\\Textures\\2_advanced_refined\\4_tudor\\lime_mortar_red_clay_brick_with_tudor_cross_frame_tui94.png"
+  },
+  {
+    "name": "tudor_box",
+    "source": "O:\\Assets\\Textures\\2_advanced_refined\\4_tudor\\lime_mortar_red_clay_brick_with_tudor_box_frame_jvzvr.png"
+  }
+]

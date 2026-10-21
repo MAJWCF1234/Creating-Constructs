@@ -1,5 +1,5 @@
 // Offscreen scene + exact HTML post pass (SSAO/bloom/tonemap)
-struct PostU{float t,sat,ao,ex,sunX,sunY,rain,night;};
+struct PostU{float t,sat,ao,ex,sunX,sunY,rain,night,volumetrics;};
 VkImage sceneColorImg=0,sceneDepthImg=0;VkImageView sceneColorView=0,sceneDepthView=0;VkDeviceMemory sceneColorMem=0,sceneDepthMem=0;
 VkFramebuffer sceneFB=0;VkRenderPass scenePass=0,postPass=0;VkPipeline postPipeline=0;VkPipelineLayout postPipeLayout=0;
 VkDescriptorSetLayout postDescLayout=0;VkDescriptorSet postDescSet=0;VkDescriptorPool postPool=0;
@@ -52,11 +52,11 @@ void initPostPass(){
  VkRenderPassCreateInfo pri{VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO};pri.attachmentCount=1;pri.pAttachments=&pat;pri.subpassCount=1;pri.pSubpasses=&psub;pri.dependencyCount=1;pri.pDependencies=&pdep;
  vkcheck(vkCreateRenderPass(device,&pri,nullptr,&postPass),"post pass");
  // post descriptors: tD, tZ, PostU
- VkDescriptorSetLayoutBinding pb[3]={{0,VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,1,VK_SHADER_STAGE_FRAGMENT_BIT,nullptr},{1,VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,1,VK_SHADER_STAGE_FRAGMENT_BIT,nullptr},{2,VK_DESCRIPTOR_TYPE_STORAGE_BUFFER,1,VK_SHADER_STAGE_FRAGMENT_BIT,nullptr}};
- VkDescriptorSetLayoutCreateInfo pli{VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO};pli.bindingCount=3;pli.pBindings=pb;vkcheck(vkCreateDescriptorSetLayout(device,&pli,nullptr,&postDescLayout),"post layout");
+ VkDescriptorSetLayoutBinding pb[4]={{0,VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,1,VK_SHADER_STAGE_FRAGMENT_BIT,nullptr},{1,VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,1,VK_SHADER_STAGE_FRAGMENT_BIT,nullptr},{2,VK_DESCRIPTOR_TYPE_STORAGE_BUFFER,1,VK_SHADER_STAGE_FRAGMENT_BIT,nullptr},{3,VK_DESCRIPTOR_TYPE_STORAGE_BUFFER,1,VK_SHADER_STAGE_FRAGMENT_BIT,nullptr}};
+ VkDescriptorSetLayoutCreateInfo pli{VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO};pli.bindingCount=4;pli.pBindings=pb;vkcheck(vkCreateDescriptorSetLayout(device,&pli,nullptr,&postDescLayout),"post layout");
  VkPipelineLayoutCreateInfo ppli{VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO};ppli.setLayoutCount=1;ppli.pSetLayouts=&postDescLayout;vkcheck(vkCreatePipelineLayout(device,&ppli,nullptr,&postPipeLayout),"post pipe layout");
  buffer(sizeof(PostU),VK_BUFFER_USAGE_STORAGE_BUFFER_BIT,postBuf,postMem,&postMap);
- VkDescriptorPoolSize pps[2]={{VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,2},{VK_DESCRIPTOR_TYPE_STORAGE_BUFFER,1}};
+ VkDescriptorPoolSize pps[2]={{VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,2},{VK_DESCRIPTOR_TYPE_STORAGE_BUFFER,2}};
  VkDescriptorPoolCreateInfo ppi{VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO};ppi.maxSets=1;ppi.poolSizeCount=2;ppi.pPoolSizes=pps;vkcheck(vkCreateDescriptorPool(device,&ppi,nullptr,&postPool),"post pool");
  VkDescriptorSetAllocateInfo dai{VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO};dai.descriptorPool=postPool;dai.descriptorSetCount=1;dai.pSetLayouts=&postDescLayout;vkcheck(vkAllocateDescriptorSets(device,&dai,&postDescSet),"post set");
  VkSamplerCreateInfo sp{VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO};sp.magFilter=sp.minFilter=VK_FILTER_NEAREST;sp.addressModeU=sp.addressModeV=sp.addressModeW=VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;

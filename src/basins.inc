@@ -34,7 +34,7 @@ void emitBasinIsland(const std::vector<NetCell>& group,int type){
  // Wall occupies [.38,.50] on rim faces; keep fill clearly inside so water never draws through walls.
  const float wallH=.5f,wallT=.12f,rim=.5f-wallT-.06f; // ≈.32
  for(auto c:group){
-  origin={c.x+.5f,c.y+.5f,c.z+.5f};turn=0;ambient=1;
+  origin={c.x+.5f,c.y+.5f,c.z+.5f};turn=0;ambient=1;activeSurface=surfaceAt(idx(c.x,c.y,c.z));
   // Exact 1×1 floor tiles abut — no overlap / z-fight
   box(1.f,.08f,1.f,0,-.46f,0,0);
   float x0,x1,z0,z1;basinFillBounds(c.x,c.y,c.z,occ,rim,x0,x1,z0,z1);
@@ -49,7 +49,7 @@ void emitBasinIsland(const std::vector<NetCell>& group,int type){
  }
  // Perimeter walls: FULL cell length so adjacent cells' walls meet (old .8 depth left 0.2 gaps).
  for(auto c:group){
-  origin={c.x+.5f,c.y+.5f,c.z+.5f};turn=0;ambient=1;
+  origin={c.x+.5f,c.y+.5f,c.z+.5f};turn=0;ambient=1;activeSurface=surfaceAt(idx(c.x,c.y,c.z));
   bool px=!occ.count(netPack(c.x+1,c.y,c.z)),nx=!occ.count(netPack(c.x-1,c.y,c.z));
   bool pz=!occ.count(netPack(c.x,c.y,c.z+1)),nz=!occ.count(netPack(c.x,c.y,c.z-1));
   float yo=-.25f;
@@ -82,4 +82,4 @@ void emitBasinFamily(int type){
   emitBasinIsland(group,type);
  }
 }
-void emitMergedBasins(){emitBasinFamily(17);emitBasinFamily(24);origin={};turn=0;}
+void emitMergedBasins(){emitBasinFamily(17);emitBasinFamily(24);origin={};turn=0;activeSurface=0;}

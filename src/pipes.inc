@@ -166,7 +166,10 @@ void pipeEmitStraight(V O,V U,V Vd,V N,bool north,bool south,bool east,bool west
  if(north)pipeFlange(O,U,Vd,N,false,1);if(south)pipeFlange(O,U,Vd,N,false,-1);
  if(ports==1)pipeCap(O,U,Vd,N,east||west);
 }
+int pipeFitRot(const PipeNode& probe,int fallback);
+void settlePipes(){for(auto& n:pipeNodes)if(n.autoAlign&&(n.kind==1||n.kind==2))n.rot=(int8_t)pipeFitRot(n,n.rot);}
 void renderPipes(){
+ settlePipes();
  for(auto& n:pipeNodes){
   V O=pipeCenter(n),U=PipeU[n.face],Vd=PipeV[n.face],N=PipeN[n.face];
   bool north=false,south=false,east=false,west=false;PipeNode q;
@@ -223,7 +226,7 @@ int pipeFitRot(const PipeNode& probe,int fallback=0){
  return v>h?1:h>v?0:(fallback%2);
 }
 void pipePlaceOne(PipeNode cell,int kind,bool rotateExisting){
- bool remove=keys[VK_SHIFT]||keys['X']||erasing;
+ bool remove=wantErase();
  int idx=findPipe(cell.cx,cell.cy,cell.cz,cell.face,cell.u,cell.v);
  if(remove){if(idx>=0){PipeNode gone=pipeNodes[idx];pipeNodes.erase(pipeNodes.begin()+idx);audioEdit(true,43,pipeCenter(gone));dirty=true;}}
  else{

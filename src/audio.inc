@@ -106,6 +106,9 @@ struct AudioMixer {
 } audio;
 void audioSaveSettings(){if(audioSettingsPath.empty())return;FILE* f=nullptr;_wfopen_s(&f,audioSettingsPath.c_str(),L"wb");if(f){fprintf(f,"%.4f %.4f %.4f %d\n",musicVolume,ambienceVolume,effectsVolume,audioMuted?1:0);fclose(f);}}
 void audioLoadSettings(const std::wstring& directory){audioSettingsPath=directory+L"\\audio.cfg";FILE* f=nullptr;_wfopen_s(&f,audioSettingsPath.c_str(),L"rb");if(f){int muted=0;float m,a,e;if(fscanf_s(f,"%f %f %f %d",&m,&a,&e,&muted)==4&&std::isfinite(m)&&std::isfinite(a)&&std::isfinite(e)){musicVolume=std::clamp(m,0.f,1.f);ambienceVolume=std::clamp(a,0.f,1.f);effectsVolume=std::clamp(e,0.f,1.f);audioMuted=muted!=0;}fclose(f);}}
+std::wstring inputSettingsPath;
+void inputSaveSettings(){if(inputSettingsPath.empty())return;FILE* f=nullptr;_wfopen_s(&f,inputSettingsPath.c_str(),L"wb");if(f){fprintf(f,"%d %.3f %.1f\n",camScheme,mouseSens,buildFov);fclose(f);}}
+void inputLoadSettings(const std::wstring& directory){inputSettingsPath=directory+L"\\input.cfg";FILE* f=nullptr;_wfopen_s(&f,inputSettingsPath.c_str(),L"rb");if(f){int scheme=0;float sens=1.f,fov=60.f;int n=fscanf_s(f,"%d %f %f",&scheme,&sens,&fov);if(n>=1)camScheme=scheme==1?1:0;if(n>=2&&std::isfinite(sens))mouseSens=std::clamp(sens,.35f,2.2f);if(n>=3&&std::isfinite(fov))buildFov=std::clamp(fov,40.f,100.f);fclose(f);}}
 bool audioLoadBank(){HRSRC r=FindResourceW(nullptr,MAKEINTRESOURCEW(201),RT_RCDATA);if(!r)return false;auto* p=(const unsigned char*)LockResource(LoadResource(nullptr,r));size_t size=SizeofResource(nullptr,r),off=8;uint32_t magic=0,count=0;if(size<8)return false;memcpy(&magic,p,4);memcpy(&count,p+4,4);if(magic!=0x3141554d||count!=A_Count)return false;
  for(int i=0;i<A_Count;i++){uint32_t n=0;if(off+4>size)return false;memcpy(&n,p+off,4);off+=4;if(n>size-off||!audio.decode(p+off,n,audioClips[i]))return false;off+=n;}if(off!=size)return false;buildMoodMusic();return true;
 }
