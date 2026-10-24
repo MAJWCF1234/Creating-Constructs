@@ -1,0 +1,248 @@
+{
+  "textures": [
+    {
+      "name": "carpet",
+      "tileable": true,
+      "tiling": 1.0
+    },
+    {
+      "name": "plaster_yellow",
+      "tileable": true,
+      "tiling": 1.0
+    },
+    {
+      "name": "plaster_cream",
+      "tileable": true,
+      "tiling": 1.0
+    },
+    {
+      "name": "pool_tile",
+      "tileable": true,
+      "tiling": 2.0
+    },
+    {
+      "name": "grating",
+      "tileable": true,
+      "tiling": 2.0
+    },
+    {
+      "name": "metal_plate",
+      "tileable": true,
+      "tiling": 1.0
+    },
+    {
+      "name": "brushed_metal",
+      "tileable": true,
+      "tiling": 1.0
+    },
+    {
+      "name": "office_door",
+      "tileable": true,
+      "tiling": 1.0
+    },
+    {
+      "name": "tv_tv",
+      "tileable": false,
+      "tiling": 1.0
+    },
+    {
+      "name": "cabinet_file_cabinet_large",
+      "tileable": false,
+      "tiling": 1.0
+    },
+    {
+      "name": "trashcan_trashcan",
+      "tileable": false,
+      "tiling": 1.0
+    },
+    {
+      "name": "barrier_concrete_barriers",
+      "tileable": false,
+      "tiling": 1.0
+    },
+    {
+      "name": "duct_vents",
+      "tileable": false,
+      "tiling": 1.0
+    },
+    {
+      "name": "streetlight_galvenised_steel",
+      "tileable": false,
+      "tiling": 1.0
+    },
+    {
+      "name": "streetlight_trafficlight",
+      "tileable": false,
+      "tiling": 1.0
+    },
+    {
+      "name": "bollard_bollards",
+      "tileable": false,
+      "tiling": 1.0
+    },
+    {
+      "name": "cooler_watercooler",
+      "tileable": false,
+      "tiling": 1.0
+    },
+    {
+      "name": "divider_dividers",
+      "tileable": false,
+      "tiling": 1.0
+    },
+    {
+      "name": "desk_desk_1",
+      "tileable": false,
+      "tiling": 1.0
+    },
+    {
+      "name": "chair_office_chair_black",
+      "tileable": false,
+      "tiling": 1.0
+    }
+  ],
+  "models": [
+    {
+      "name": "tv",
+      "triangles": 180
+    },
+    {
+      "name": "cabinet",
+      "triangles": 20
+    },
+    {
+      "name": "trashcan",
+      "triangles": 484
+    },
+    {
+      "name": "barrier",
+      "triangles": 44
+    },
+    {
+      "name": "duct",
+      "triangles": 32
+    },
+    {
+      "name": "vent",
+      "triangles": 44
+    },
+    {
+      "name": "streetlight",
+      "triangles": 332
+    },
+    {
+      "name": "bollard",
+      "triangles": 224
+    },
+    {
+      "name": "cooler",
+      "triangles": 444
+    },
+    {
+      "name": "divider",
+      "triangles": 98
+    },
+    {
+      "name": "desk",
+      "triangles": 208
+    },
+    {
+      "name": "chair",
+      "triangles": 324
+    },
+    {
+      "name": "filecabinet",
+      "triangles": 20
+    }
+  ],
+  "sources": [
+    {
+      "source": "O:\\retro official\\Environments\\Retro Office Pack\\textures\\Carpet_BaseColor.jpg",
+      "sha256": "9dd911b5a9aa2d8e1a9325656b4e8a4830532db1d4f65ea24a697dfb1d793597"
+    },
+    {
+      "source": "O:\\Assets\\Textures\\Plaster\\Plaster_17-256x256.png",
+      "sha256": "e466af49612f14f82b0bbfb4071b3f2cf74ecd24657a57a01f5a4197fcac0c59"
+    },
+    {
+      "source": "O:\\Assets\\Textures\\Plaster\\Plaster_15-256x256.png",
+      "sha256": "88fbb7113ae8b0f73f219de060ea60d3e6dd683a9b6482cee390e24b0be8c00a"
+    },
+    {
+      "source": "O:\\Assets\\Textures\\Tile\\Tile_15-256x256.png",
+      "sha256": "4eeb6f505bc66ff6040f71eaa939857759088f922ef406ba11b140a56938a910"
+    },
+    {
+      "source": "O:\\Assets\\Textures\\Grating\\Grating_15-256x256_p3.png",
+      "sha256": "c4a678cb3f261705a44669c8ecd122e18be51dd67be6fdfae4ac6bbaf9c4079b"
+    },
+    {
+      "source": "O:\\Assets\\Textures\\Metal\\Metal_18-256x256.png",
+      "sha256": "c32d5f54c5fa453e7f5baf12a7ec73180720dde7b953a5fe2d39103a0cdca33c"
+    },
+    {
+      "source": "O:\\Assets\\Textures\\Metal\\Metal_10-256x256.png",
+      "sha256": "52ed1b4945606b466f4ae87189a11be3c30354ff91c8891049a8561c15db3d6f"
+    },
+    {
+      "source": "O:\\Assets\\Textures\\2_advanced_refined\\2_metal\\blue_office_door_bottom_nh1qa.png",
+      "sha256": "70b0ee2a310becbecfc0f898bb5bf9d77b22569d960de7fe2f74edfccc839e3c"
+    },
+    {
+      "source": "O:\\Assets\\Textures\\2_advanced_refined\\2_metal\\blue_office_door_top_xa1r0.png",
+      "sha256": "8fdfd79e2466c105f4091ff4a3c6c81fb74cf5402de0e754742a102681370f9c"
+    },
+    {
+      "source": "O:\\retro official\\Environments\\OFFICE\\computers\\TV.glb",
+      "sha256": "b9c5499f2740a71d010817241abe0afbae6c0294a9dae314acf8441142647141"
+    },
+    {
+      "source": "O:\\retro official\\Environments\\OFFICE\\file_cabinets\\file_cabinet_largest.glb",
+      "sha256": "b8e5e64e37e2c30c5b32c8318e5df7b4e70d01963d9981ca810608979db2fa3c"
+    },
+    {
+      "source": "O:\\retro official\\Environments\\URBAN\\Litter\\TrashCan\\trash_can.glb",
+      "sha256": "9656cf8f2585b76c76d353b08a22364734788bd5271a8b059dba0b75915628fd"
+    },
+    {
+      "source": "O:\\retro official\\Environments\\URBAN\\Cones & Barriers\\Concrete Barriers\\Jersey_barrier.glb",
+      "sha256": "0122dc530e53d100446962961aec3de5968e7447809158961942fb4ddbcdfb9d"
+    },
+    {
+      "source": "O:\\retro official\\Environments\\URBAN\\Vents\\duct.glb",
+      "sha256": "551bcd54206b0a2bb1492b75183c5bfc6e3b39240ee0fa4492005e26e35bc59a"
+    },
+    {
+      "source": "O:\\retro official\\Environments\\URBAN\\Vents\\vent_cover.glb",
+      "sha256": "6a940a6883cb3dc6b74869b645ef43546ad3ca76a1b3a7f582b3ba592ad0dbe8"
+    },
+    {
+      "source": "O:\\retro official\\Environments\\URBAN\\Traffic lights\\street_light.glb",
+      "sha256": "958f3b310793e8762aa9488958cc50bf1936eefca0e25b0995111cc583e8ed39"
+    },
+    {
+      "source": "O:\\retro official\\Environments\\URBAN\\Cones & Barriers\\Bollards\\concrete_retro_bollard_light.glb",
+      "sha256": "bc322e87e0e3a095e334583360524c5f1b0069ef1575ca852e475be5150f92de"
+    },
+    {
+      "source": "O:\\retro official\\Environments\\OFFICE\\extras\\water_cooler_bottle_attached.glb",
+      "sha256": "95bbdd4e040b8b1283ecf3cb2093c32d6cadde7c0702ad407a9e9b5b499a8436"
+    },
+    {
+      "source": "O:\\retro official\\Environments\\OFFICE\\dividers\\divider_black_blue_half.glb",
+      "sha256": "f29b00b6a7525aacc09f76943821214b63c10a9101270e1d904b57d6978657d2"
+    },
+    {
+      "source": "O:\\retro official\\Environments\\OFFICE\\desks\\desk1.glb",
+      "sha256": "96b0dd32236f62e5fb3b85dee23bc579500e727fa98d6845bae3e7dad89b3202"
+    },
+    {
+      "source": "O:\\retro official\\Environments\\OFFICE\\chairs\\office_chair_black.glb",
+      "sha256": "f1a786ae69137cc73db25192f1cc2677cac8e85dcb39b2745b5e0af6f6b9332f"
+    },
+    {
+      "source": "O:\\retro official\\Environments\\OFFICE\\file_cabinets\\file_cabinet_larger.glb",
+      "sha256": "1d4760a36dd0a42de6566cc8f68fbc75f79c3ee2edcca43763a530cf037695b9"
+    }
+  ]
+}

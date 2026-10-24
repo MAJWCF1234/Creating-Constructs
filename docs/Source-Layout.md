@@ -9,12 +9,12 @@ consolidated **67 source files into 41** (42 with the later `world/tools.inc`); 
 |----------|----------|
 | `src/main.cpp` | Core world, geometry, physics, Vulkan setup, and frame loop |
 | `src/audio/mixer.inc` | Mixer, audio events, and mood soundtrack definitions |
-| `src/world/` | State/material recipes, saves, pieces, vegetation, landscape, pipes, doors, export, shared solidity, and build tools (`tools.inc`: box / select / stamp / paint, symmetry, build plane, day cycle, torch, construct generators) |
+| `src/world/` | State/material recipes, saves, pieces, vegetation, landscape, pipes, doors, export, shared solidity, imported props (`props.inc`), and build tools (`tools.inc`: box / select / stamp / paint, symmetry, build plane, day cycle, torch, construct generators) |
 | `src/render/` | Texture baking, foliage tracing, postprocessing, frame/readback support, thumbnails, and placement previews |
 | `src/platform/windows.inc` | Win32 windows, input, gamepad handling, launch flags, and application lifecycle |
 | `src/platform/ui.inc` | Save-browser helpers and the native editor/menu composition |
 | `src/tests/regression.inc` | Smoke/regression tests and catalog audit, preserving their original dependency order |
-| `src/generated/` | Eight generated catalog, asset, texture, mesh, and SPIR-V data files |
+| `src/generated/` | Generated catalog, asset, texture, mesh, prop (`prop_models.inc`, `prop_textures.inc`, `prop_shader.glsl`) and SPIR-V data files |
 | `src/shaders/` | Seven Vulkan stage entry points and six shared GLSL files |
 
 ## What was combined

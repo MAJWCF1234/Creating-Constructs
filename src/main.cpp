@@ -35,9 +35,9 @@ World world;std::vector<World> history,redoStack;
 int idx(int x,int y,int z){return x*(MaxPlot*WorldHeight)+z*WorldHeight+y;} bool inb(int x,int y,int z){return x>=0&&z>=0&&y>=0&&x<world.n&&z<world.n&&y<20;}
 Cell get(int x,int y,int z){return inb(x,y,z)?world.c[idx(x,y,z)]:Cell{};}
 void put(int x,int y,int z,int t,int r=0){if(inb(x,y,z)){world.c[idx(x,y,z)]={(int8_t)t,(int8_t)r};world.surfaces.erase(idx(x,y,z));forgetDoor(idx(x,y,z));}}
-int footprintW(int t){return (t==23||t==51||t==57||t==58||t==59||t==69||t==78)?2:1;}
+int footprintW(int t){return (t==23||t==51||t==57||t==58||t==59||t==69||t==78||t==109||t==124)?2:1;}
 int footprintD(int t){return (t==58)?2:1;}
-int footprintH(int t){return (t==96||t==23||t==51||t==56||t==58||t==59||t==60||t==68)?2:1;}
+int footprintH(int t){return (t==96||t==23||t==51||t==56||t==58||t==59||t==60||t==68||t==112)?2:1;}
 template<class Fn>void eachFootprintCell(int x,int y,int z,int t,int r,Fn&& fn){
  int w=footprintW(t),d=footprintD(t),h=footprintH(t);for(int ly=0;ly<h;ly++)for(int lz=0;lz<d;lz++)for(int lx=0;lx<w;lx++){int dx=lx,dz=lz;for(int i=0;i<r;i++){int nx=dz;dz=-dx;dx=nx;}fn(x+dx,y+ly,z+dz);}}
 bool footprintCovers(int ax,int ay,int az,int t,int r,int x,int y,int z){bool hit=false;eachFootprintCell(ax,ay,az,t,r,[&](int cx,int cy,int cz){if(cx==x&&cy==y&&cz==z)hit=true;});return hit;}
@@ -82,6 +82,7 @@ const char* camHelpText(){return camScheme==1?"Shift-drag orbit, Alt-drag pan, C
 bool hit=false,hasAdd=false,hasRem=false;V hitAdd,hitRem,hitPoint,anchorA;bool pendingCable=false;
 HWND mainWindow,viewWindow,topPanel,sidePanel,dockPanel,modalPanel,shareEdit;int W=1280,H=800,vw=1056,vh=690;HFONT font,fontBold,fontTitle;HBRUSH bgBrush;
 #include "generated/catalog.inc"
+#include "generated/prop_textures.inc"
 #include "audio/mixer.inc"
 // Overcast / Noon / Golden hour / Blue hour / Concrete overcast — matched to HTML MOODS
 const V moodTop[]={{.557f,.580f,.596f},{.310f,.525f,.776f},{.373f,.478f,.651f},{.110f,.165f,.314f},{.416f,.439f,.455f}};
@@ -128,7 +129,7 @@ struct Vertex{V p,n;float m,a;float u=0,v=0;};std::vector<Vertex> vertices,trans
 V transform(V p){p=doorHingePoint(p);for(int i=0;i<turn;i++)p={p.z,p.y,-p.x};return p+origin;}
 // Local emitter centers match the visible fixture geometry, including rotation.
 V lampEmitter(int type){
- V local=type==99?V{0,.345f,0}:type==104?V{0,.1f,-.34f}:type==105?V{0,0,-.4f}:type==113?V{0,-.4f,-.44f}:type==118?V{0,.38f,0}:type>=100?V{0,.18f,-.34f}:(type==13||type==79||type==80)?V{0,.4f,0}:type==26?V{0,.17f,0}:type==27?V{0,0,-.4f}:type==95?V{0,-.06f,-.36f}:V{0,-.08f,0};
+ V local=type==99?V{0,.345f,0}:type==104?V{0,.1f,-.34f}:type==105?V{0,.3f,-.05f}:type==112?V{0,1.75f,0}:type==113?V{0,-.4f,-.44f}:type==115?V{0,.35f,0}:type==119?V{0,.38f,0}:type>=100?V{0,.18f,-.34f}:(type==13||type==79||type==80)?V{0,.4f,0}:type==26?V{0,.17f,0}:type==27?V{0,0,-.4f}:type==95?V{0,-.06f,-.36f}:V{0,-.08f,0};
  return transform(local);
 }
 // Same-facing neighbor in piece-local X/Y (used so cobogó carved edges merge when tiled).
@@ -185,6 +186,7 @@ void stairHandrails(float xL,float xR,int steps,float xMid=-999.f){
 bool solidAt(V p);
 #include "world/vegetation.inc"
 #include "world/pipes.inc"
+#include "world/props.inc"
 void waterSurface(){
  int x=(int)floorf(origin.x),y=(int)floorf(origin.y),z=(int)floorf(origin.z);bool above=get(x,y+1,z).t==40;float top=above?.5f:.35f;
  if(!above)quad({-.5f,top,.5f},{.5f,top,.5f},{.5f,top,-.5f},{-.5f,top,-.5f},9);
@@ -268,7 +270,8 @@ constexpr int BrickAtlasBase=9+NatureTextureCount+TopoTextureCount;
 constexpr int BrickTopLayer=BrickAtlasBase; // single extra GPU layer — full pack stays in brick_textures.inc for tools
 void uploadTextures(){
  // Heap staging — stack cannot hold ~2–4 MB of atlas layers (instant crash with brick pack).
- constexpr int TextureLayers=BrickAtlasBase+1+BrickTextureCount;
+ static_assert(BrickAtlasBase+1+BrickTextureCount==PropMaterialBase,"prop material ids double as texture layers");
+ constexpr int TextureLayers=BrickAtlasBase+1+BrickTextureCount+PropTextureCount;
  constexpr size_t LayerBytes=128ull*128*4;
  std::vector<unsigned char> layers((size_t)TextureLayers*LayerBytes,0);
  auto layer=[&](int i)->unsigned char*{return layers.data()+(size_t)i*LayerBytes;};
@@ -281,6 +284,7 @@ void uploadTextures(){
  for(int i=0;i<TopoTextureCount;i++)memcpy(layer(9+NatureTextureCount+i),topoPixels[i],LayerBytes);
  memcpy(layer(BrickTopLayer),brick_top_rgba,sizeof(brick_top_rgba));
  for(int i=0;i<BrickTextureCount;i++)memcpy(layer(BrickAtlasBase+1+i),brickPixels[i],LayerBytes);
+ for(int i=0;i<PropTextureCount;i++)memcpy(layer(PropMaterialBase+i),propPixels[i],LayerBytes);
  VkImageCreateInfo ii{VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO};ii.imageType=VK_IMAGE_TYPE_2D;ii.format=VK_FORMAT_R8G8B8A8_UNORM;ii.extent={128,128,1};ii.mipLevels=8;ii.arrayLayers=TextureLayers;ii.samples=VK_SAMPLE_COUNT_1_BIT;ii.tiling=VK_IMAGE_TILING_OPTIMAL;ii.usage=VK_IMAGE_USAGE_TRANSFER_DST_BIT|VK_IMAGE_USAGE_SAMPLED_BIT;
  vkcheck(vkCreateImage(device,&ii,nullptr,&texImage),"tex image");VkMemoryRequirements req;vkGetImageMemoryRequirements(device,texImage,&req);
  VkMemoryAllocateInfo ai{VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO};ai.allocationSize=req.size;ai.memoryTypeIndex=memoryType(req.memoryTypeBits,VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
@@ -377,7 +381,7 @@ if(c.t==5){ // moss from surface nets; wet beds when water sits on/against it
 if(c.t==63||c.t==64)continue; // stone/boulder from rock nets
 if(c.t==17||c.t==24)continue; // merged planter / pool basins
 if(c.t==96){int index=idx(x,y,z);doorRoots.push_back(index);auto motion=doorMotions.find(index);if(motion==doorMotions.end()||motion->second.rotation!=c.r)doorMotions[index]={world.doors.count(index)?1.f:0.f,c.r};gpu.cells[index]|=doorGpuBits(index);}
-piece(c.t);if((c.t==13||c.t==26||c.t==27||c.t==37||c.t==79||c.t==80||c.t==95||(c.t>=99&&c.t<=103)||c.t==104||c.t==105||c.t==113||c.t==118)&&lamp<16){V emitter=lampEmitter(c.t);lampKinds[lamp]=c.t;gpu.lamps[lamp++]={emitter.x,emitter.y,emitter.z,c.t==95?2.f:1.f};}
+piece(c.t);if((c.t==13||c.t==26||c.t==27||c.t==37||c.t==79||c.t==80||c.t==95||(c.t>=99&&c.t<=103)||c.t==104||c.t==105||c.t==112||c.t==113||c.t==115||c.t==119)&&lamp<16){V emitter=lampEmitter(c.t);lampKinds[lamp]=c.t;gpu.lamps[lamp++]={emitter.x,emitter.y,emitter.z,c.t==95?2.f:1.f};}
 if(c.t==40&&get(x,y-1,z).t==5)natureWaterUnderstory(-.38f); // water on moss — aquatic fringe
 }
 // Mirror each reserved multi-cell footprint without changing the authored world.
@@ -450,7 +454,7 @@ V anchor(){if(hasRem&&hasAdd)return (hitAdd+hitRem)*.5f+V{.5,.5,.5};if(hasRem)re
 bool wallFlushPiece(int t){
  // Face-mounted openings, screens, and wall vegetation — open/−Z side sits against the hit wall.
  return t==3||t==8||t==9||t==15||t==21||t==22||t==25||t==27||t==32||t==33||t==52
-  ||t==97||t==100||t==101||t==102||t==103||t==104||t==105||t==111||t==113||t==120||t==77||t==70||t==71||t==72||t==73||t==74||t==82||t==83||t==84||t==85||t==87||t==95;
+  ||t==97||t==100||t==101||t==102||t==103||t==104||t==105||t==111||t==113||t==121||t==77||t==70||t==71||t==72||t==73||t==74||t==82||t==83||t==84||t==85||t==87||t==95;
 }
 void autoFacing(int& t,int& r){
  if(!hasRem||!hasAdd)return;V d=hitRem-hitAdd;if(!(d.x||d.z))return; // vertical faces only

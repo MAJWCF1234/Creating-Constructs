@@ -190,40 +190,30 @@ case 103: // Industrial terminal, inset screen and keyboard shelf.
  box(.72f,.65f,.16f,0,.06f,-.41f,8);box(.60f,.43f,.016f,0,.12f,-.32f,3);box(.52f,.34f,.012f,0,.12f,-.304f,50);
  for(int i=0;i<4;i++)box(.32f-i*.045f,.012f,.007f,-.05f,.23f-i*.065f,-.293f,48);
  box(.68f,.06f,.30f,0,-.32f,-.30f,8);for(int i=0;i<8;i++)box(.045f,.015f,.10f,-.24f+i*.068f,-.28f,-.23f,3);break;
-// Content update: Cyber (104-114) and Liminal (115-123) parts. Box-built so HTML defs mirror them exactly.
+// Content update: Cyber (104-115) and Liminal (116-127). Props come from the local Retro Official packs
+// via tools/prepare_props.py; surfaces use imported tileable textures (materials PropMaterialBase+n).
 case 104: // Neon violet strip pair on a dark backing.
  box(.92f,.32f,.05f,0,.1f,-.46f,3);for(float x:{-.38f,.38f})box(.04f,.24f,.09f,x,.1f,-.40f,8);box(.82f,.035f,.035f,0,.18f,-.34f,53);box(.82f,.035f,.035f,0,.02f,-.34f,53);break;
-case 105: // Holo sign: vertical cyan panel on a wall bracket with dark glyph bars.
- box(.1f,.08f,.12f,0,.42f,-.44f,8);box(.5f,.9f,.06f,0,0,-.44f,3);box(.42f,.8f,.015f,0,0,-.40f,48);for(float y:{.25f,0.f,-.25f})box(.3f,.05f,.01f,0,y,-.391f,50);break;
-case 106: // Server rack with LED rows.
- box(.8f,1,.8f,0,0,.05f,58);box(.72f,.9f,.02f,0,0,-.36f,3);for(int i=0;i<6;i++){box(.5f,.02f,.01f,-.08f,-.38f+i*.15f,-.372f,48);box(.06f,.02f,.01f,.28f,-.38f+i*.15f,-.372f,49);}break;
-case 107: // Vending machine: glass front, lit header, keypad and slot.
- box(.8f,1,.6f,0,0,.1f,58);box(.56f,.55f,.02f,-.08f,.12f,-.2f,2);box(.72f,.16f,.02f,0,.4f,-.2f,4);box(.12f,.4f,.02f,.3f,.05f,-.2f,3);box(.5f,.12f,.02f,-.08f,-.34f,-.2f,13);break;
-case 108: // Steel grate floor with kerb strips.
- box(1,.04f,1,0,-.46f,0,8);for(int i=0;i<8;i++)box(1,.03f,.04f,0,-.43f,-.44f+i*.125f,3);box(1,.08f,.06f,0,-.44f,-.47f,8);box(1,.08f,.06f,0,-.44f,.47f,8);break;
-case 109: // Jersey barrier with hazard bands both sides.
- box(1,.3f,.6f,0,-.35f,0,0);box(1,.3f,.36f,0,-.05f,0,0);box(1,.1f,.24f,0,.15f,0,0);box(1,.08f,.012f,0,-.3f,-.306f,41);box(1,.08f,.012f,0,-.3f,.306f,41);break;
-case 110: // Square ventilation duct with end flanges.
- box(1,.5f,.5f,0,.25f,0,8);box(.06f,.56f,.56f,-.44f,.25f,0,3);box(.06f,.56f,.56f,.44f,.25f,0,3);break;
-case 111: // Wall fan: frame, dark throat, cross blades and hub.
- box(.9f,.9f,.08f,0,0,-.46f,8);box(.78f,.78f,.02f,0,0,-.43f,13);box(.64f,.1f,.02f,0,0,-.41f,3);box(.1f,.64f,.02f,0,0,-.41f,3);box(.14f,.14f,.04f,0,0,-.40f,8);break;
-case 112: // Antenna mast with twin dishes and a rose tip light.
- cylinder(.03f,1,0,3,8);box(.5f,.03f,.03f,0,.3f,0,3);box(.16f,.16f,.03f,.2f,.3f,0,8);box(.16f,.16f,.03f,-.2f,.3f,0,8);box(.04f,.04f,.04f,0,.5f,0,49);break;
-case 113: // Floor-level cyan light strip along a wall base.
- box(1,.1f,.08f,0,-.45f,-.46f,3);box(1,.04f,.03f,0,-.41f,-.44f,48);break;
-case 114: // Grid floor: dark plate with glowing cyan lines.
- box(1,.1f,1,0,-.45f,0,13);for(int i=0;i<4;i++){box(1,.012f,.02f,0,-.395f,-.375f+i*.25f,48);box(.02f,.012f,1,-.375f+i*.25f,-.395f,0,48);}break;
-case 115:box(1,1,1,0,0,0,54);break; // Carpet cube
-case 116:box(1,1,1,0,0,0,55);box(1.004f,.05f,1.004f,0,-.12f,0,15);break; // Yellow wall with a dark dado stripe
-case 117: // Drop-ceiling tile with T-bar edges.
- box(1,.12f,1,0,.44f,0,56);box(1,.015f,.04f,0,.375f,-.48f,3);box(1,.015f,.04f,0,.375f,.48f,3);box(.04f,.015f,1,-.48f,.375f,0,3);box(.04f,.015f,1,.48f,.375f,0,3);break;
-case 118: // Bare twin fluorescent tubes.
- box(1,.06f,.22f,0,.44f,0,3);box(.9f,.04f,.04f,0,.405f,-.06f,4);box(.9f,.04f,.04f,0,.405f,.06f,4);break;
-case 119:box(1,1,1,0,0,0,57);break; // Pool tile cube
-case 120: // Blank painted door in a dark frame, flush on the wall.
- box(.08f,1,.14f,-.46f,0,-.43f,3);box(.08f,1,.14f,.46f,0,-.43f,3);box(1,.06f,.14f,0,.47f,-.43f,3);box(.84f,.94f,.05f,0,-.03f,-.44f,5);box(.04f,.04f,.06f,.28f,-.05f,-.49f,8);break;
-case 121: // Office partition with top rail and feet.
- box(1,.62f,.06f,0,-.19f,0,54);box(1,.03f,.09f,0,.13f,0,8);box(.06f,.03f,.3f,-.4f,-.485f,0,3);box(.06f,.03f,.3f,.4f,-.485f,0,3);break;
-case 122: // Water cooler: white body, glass jug, tap.
- box(.3f,.62f,.3f,0,-.19f,0,56);cylinder(.14f,.3f,.34f,2,12);box(.06f,.04f,.08f,0,-.1f,-.19f,3);break;
-case 123:box(.3f,1,.3f,0,0,0,55);break; // Painted square pillar
+case 105:propModel(prop_tv,{0,-.35f,0});break; // Wall screen: retro TV set against the wall
+case 106:propModel(prop_cabinet);for(int i=0;i<6;i++){box(.5f,.02f,.012f,-.08f,-.3f+i*.12f,.245f,48);box(.06f,.02f,.012f,.3f,-.3f+i*.12f,.245f,49);}break; // Server cabinet: LED rows on the drawer face
+case 107:propModel(prop_trashcan);break;
+case 108:box(1,.05f,1,0,-.475f,0,PropMaterialBase+4);box(1,.08f,.06f,0,-.44f,-.47f,8);box(1,.08f,.06f,0,-.44f,.47f,8);break; // Grate floor
+case 109:propModel(prop_barrier);break; // Jersey barrier, 2 wide
+case 110:propModel(prop_duct);break;
+case 111:propModel(prop_vent);break; // Fan vent, wall-flush
+case 112:propModel(prop_streetlight);break; // Street light, 2 tall
+case 113:box(1,.1f,.08f,0,-.45f,-.46f,3);box(1,.04f,.03f,0,-.41f,-.44f,48);break; // Light strip
+case 114:box(1,.1f,1,0,-.45f,0,PropMaterialBase+5);for(int i=0;i<4;i++){box(1,.012f,.02f,0,-.395f,-.375f+i*.25f,48);box(.02f,.012f,1,-.375f+i*.25f,-.395f,0,48);}break; // Grid floor
+case 115:propModel(prop_bollard);break; // Bollard light
+case 116:box(1,1,1,0,0,0,PropMaterialBase+0);break; // Carpet
+case 117:box(1,1,1,0,0,0,PropMaterialBase+1);box(1.004f,.05f,1.004f,0,-.12f,0,15);break; // Yellow wall with dado
+case 118:box(1,.12f,1,0,.44f,0,PropMaterialBase+2);box(1,.015f,.04f,0,.375f,-.48f,3);box(1,.015f,.04f,0,.375f,.48f,3);box(.04f,.015f,1,-.48f,.375f,0,3);box(.04f,.015f,1,.48f,.375f,0,3);break; // Ceiling tile
+case 119:box(1,.06f,.22f,0,.44f,0,PropMaterialBase+6);box(.9f,.04f,.04f,0,.405f,-.06f,4);box(.9f,.04f,.04f,0,.405f,.06f,4);break; // Tube light
+case 120:box(1,1,1,0,0,0,PropMaterialBase+3);break; // Pool tile
+case 121:box(.08f,1,.14f,-.46f,0,-.43f,3);box(.08f,1,.14f,.46f,0,-.43f,3);box(1,.06f,.14f,0,.47f,-.43f,3);box(.84f,.94f,.05f,0,-.03f,-.44f,PropMaterialBase+7);box(.04f,.04f,.06f,.28f,-.05f,-.49f,8);break; // Office door
+case 122:propModel(prop_divider);break; // Partition
+case 123:propModel(prop_cooler);break;
+case 124:propModel(prop_desk);break; // Desk, 2 wide
+case 125:propModel(prop_chair);break;
+case 126:propModel(prop_filecabinet);break;
+case 127:box(.3f,1,.3f,0,0,0,PropMaterialBase+1);break; // Painted pillar

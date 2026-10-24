@@ -1,6 +1,7 @@
 #version 450
 #extension GL_GOOGLE_include_directive : require
 #include "scene_shared.glsl"
+#include "../generated/prop_shader.glsl"
 void main(){
  bool movingDoorLeaf=(mat>=128?(mat-128)%64:mat)==52;
  int recipe=mat>=128?(mat-128)/64:0;int material=mat>=128?(mat-128)%64:mat;material=surfaceBase(recipe&31,material);vec3 sp=recipe!=0?surfacePoint(p,recipe):p;vec3 sn=recipe!=0?normalize(surfacePoint(n,recipe)):n;if(movingDoorLeaf){vec3 local=vec3(foliageUv,0.);sp=recipe!=0?surfacePoint(local,recipe):local;sn=recipe!=0?normalize(surfacePoint(vec3(0,0,1),recipe)):vec3(0,0,1);}
@@ -34,11 +35,10 @@ void main(){
  if(material==50){albedo=vec3(.025,.18,.20);emit=.35+s.sky.w*.6;rough=.88;}
  if(material==51){albedo=vec3(.03,.38,.07);emit=.5+s.sky.w*1.4;rough=.9;}
  if(material==53){albedo=vec3(.62,.2,1.);emit=.5+s.sky.w*2.5;rough=.8;}   // violet neon
- if(material==54){albedo=vec3(.52,.40,.26);rough=1.;}                        // carpet
- if(material==55){albedo=vec3(.86,.80,.55);rough=.9;}                        // pale yellow paint
- if(material==56){albedo=vec3(.88,.88,.84);rough=.95;}                       // ceiling tile / appliance white
- if(material==57){albedo=vec3(.64,.82,.86);rough=.25;metal=.05;}             // pool tile
- if(material==58){albedo=vec3(.12,.12,.15);rough=.5;metal=.45;}              // dark cabinet
+ if(material>=PROP_BASE&&material<PROP_BASE+PROP_COUNT){ // imported props: mesh UVs, or planar tiling for surfaces
+  float tiling=propTiling(material);vec2 puv=tiling>0.?vec2(uv.x*tiling,1.-uv.y*tiling):foliageUv;vec4 t=textureLod(maps,vec3(puv,float(material)),0.);if(t.a<.5)discard;
+  int slot=material-PROP_BASE;bool metalSurface=slot>=4&&slot<=6;albedo=t.rgb;rough=metalSurface?.5:.9;metal=metalSurface?.5:0.;if(tiling>0.){bumpLayer=material;bumpScale=slot==3?.03:.06;uv=puv;}
+ }
  if(material==5){albedo=sampleMap(4,uv);bumpLayer=4;bumpScale=.12;rough=.88;}            // timber
  if(material==6){ // Optimum vine — UV in normal.xy (tiled), foliage biome tint
   vec2 vu=fract(n.xy);

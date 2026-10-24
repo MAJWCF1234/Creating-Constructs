@@ -1,6 +1,6 @@
 # Creating Constructs — World Generation API
 
-**Core world contract (native + HTML):** plots support **64×64** with Share JSON `stride:64`; autosave writes **MON4** (`0x344F4E4D`); named snapshots write **MNS4** (`0x34534E4D`). MNS4 keeps the MNS3 64×64×20 cell layout and appends `uint32_t pipeCount` plus packed 9-byte `PipeNode` records after the cables. MNS1 / MNS2 / MNS3 remain readable. Native Share JSON round-trips `pipes` (including `rot` and `auto`). **`PieceCount = 124`** (IDs `0…123`).
+**Core world contract (native + HTML):** plots support **64×64** with Share JSON `stride:64`; autosave writes **MON4** (`0x344F4E4D`); named snapshots write **MNS4** (`0x34534E4D`). MNS4 keeps the MNS3 64×64×20 cell layout and appends `uint32_t pipeCount` plus packed 9-byte `PipeNode` records after the cables. MNS1 / MNS2 / MNS3 remain readable. Native Share JSON round-trips `pipes` (including `rot` and `auto`). **`PieceCount = 128`** (IDs `0…127`).
 
 **Updated: October 24, 2026.** Native extensions include material recipes, named viewpoints, animated service-door targets, the main / pause menu, and the build tools / construct generators in section 16.4. The shared piece catalog does not imply feature parity between native and HTML.
 
@@ -116,7 +116,7 @@ Native `loadWorldJson` still accepts this when `stride` is omitted. Prefer emitt
 Rules:
 
 - Omit empty cells entirely.
-- `t` must be `0 … PieceCount-1` (currently **0…123**).
+- `t` must be `0 … PieceCount-1` (currently **0…127**).
 - `r` must be `0…3`.
 - Duplicate keys: last write wins (avoid duplicates).
 - Native `m` defaults to `0` (original material); `d` defaults to `0` (closed). See sections 14–15 for validation and encoding.
@@ -174,7 +174,7 @@ def to_share(N: int, cells: dict, cables=(), pipes=(), stride: int = STRIDE) -> 
 
 ## 4. Piece catalog (`t`)
 
-Canonical names live in `src/generated/catalog.inc` / HTML `TN` (keep them in sync via `tools/sync_catalog.py`). Current **`PieceCount = 124`**. GPU cell encoding uses **`PieceEncodingStride = 128`** (`1 + t + stride * r`).
+Canonical names live in `src/generated/catalog.inc` / HTML `TN` (keep them in sync via `tools/sync_catalog.py`). Current **`PieceCount = 128`**. GPU cell encoding uses **`PieceEncodingStride = 128`** (`1 + t + stride * r`).
 
 | ID | Name | Notes |
 |----|------|--------|
@@ -283,25 +283,29 @@ Canonical names live in `src/generated/catalog.inc` / HTML `TN` (keep them in sy
 | 102 | Neon rose | Twin rose tubes (wall-flush fixture) |
 | 103 | Terminal | Industrial terminal with lit screen (wall-flush) |
 | 104 | Neon violet | Twin violet tubes (wall-flush fixture) — *Cyber* |
-| 105 | Holo sign | Hanging cyan sign panel on a bracket (wall-flush fixture) |
-| 106 | Server rack | Dark cabinet with LED rows; solid |
-| 107 | Vending | Vending machine with lit header; solid |
-| 108 | Grate floor | Steel grate plate at cell floor |
-| 109 | Barrier | Jersey barrier along X with hazard bands |
-| 110 | Duct | Square duct along X at cell top |
-| 111 | Fan vent | Wall fan in a steel frame (wall-flush) |
-| 112 | Antenna | Mast with dishes and tip light; thin collider |
+| 105 | Wall screen | Retro TV set against the wall (wall-flush fixture; Retro Official OFFICE) |
+| 106 | Server cabinet | Metal cabinet with LED rows; solid (OFFICE) |
+| 107 | Trash can | Street trash can (URBAN) |
+| 108 | Grate floor | Steel grating plate at cell floor (tileable grating texture) |
+| 109 | Barrier | Jersey barrier — **2×1** footprint (URBAN) |
+| 110 | Duct | Square ventilation duct filling the cell (URBAN) |
+| 111 | Fan vent | Vent cover on the wall (wall-flush; URBAN) |
+| 112 | Street light | Street lamp — **1×2** tall fixture (URBAN) |
 | 113 | Light strip | Floor-level cyan strip on a wall base (wall-flush fixture) |
-| 114 | Grid floor | Dark floor plate with glowing grid lines |
-| 115 | Carpet | Carpet material cube — *Liminal* |
-| 116 | Yellow wall | Pale painted cube with dado stripe |
-| 117 | Ceiling tile | Drop-ceiling tile with T-bar edges at cell top |
-| 118 | Tube light | Bare twin fluorescent tubes (fixture) |
-| 119 | Pool tile | Glossy pale-blue tile cube |
-| 120 | Door blank | Non-interactive painted door in a frame (wall-flush) |
-| 121 | Partition | Office partition panel along X, 0.6 high |
-| 122 | Water cooler | Cooler with glass jug; slim collider |
-| 123 | Painted pillar | Square painted pillar |
+| 114 | Grid floor | Metal plate with glowing grid lines |
+| 115 | Bollard light | Concrete bollard with light (URBAN fixture) |
+| 116 | Carpet | Office carpet cube — *Liminal* |
+| 117 | Yellow wall | Yellow plaster cube with dado stripe |
+| 118 | Ceiling tile | Cream plaster drop-ceiling tile with T-bars at cell top |
+| 119 | Tube light | Bare twin fluorescent tubes (fixture) |
+| 120 | Pool tile | Ceramic pool tile cube |
+| 121 | Office door | Blue office door in a dark frame (wall-flush, non-interactive) |
+| 122 | Partition | Office divider panel (OFFICE) |
+| 123 | Water cooler | Water cooler with bottle (OFFICE) |
+| 124 | Desk | Office desk — **2×1** footprint (OFFICE) |
+| 125 | Office chair | Office chair (OFFICE) |
+| 126 | File cabinet | Metal file cabinet (OFFICE) |
+| 127 | Painted pillar | Square yellow plaster pillar |
 
 **Do not** put types `16` or `43–46` in `c` for generators. Cables and pipes have their own arrays.
 
@@ -312,8 +316,8 @@ Stored at the min corner; leave covered neighbors empty. Width/depth follow rota
 | Piece | Footprint (local W×D×H) |
 |-------|-------------------------|
 | Doorway (23), Portal (51) | 2×1×2 |
-| Pilotis (56), Core (60), Strut (68) | 1×1×2 |
-| Megastep (57), Girder (69), Flight (78) | 2×1×1 |
+| Pilotis (56), Core (60), Strut (68), Street light (112) | 1×1×2 |
+| Megastep (57), Girder (69), Flight (78), Barrier (109), Desk (124) | 2×1×1 |
 | Lightwell (58) | 2×2×2 |
 | Bridge (59) | 2×1×2 |
 | Quadpier (94) | **1×1×1** (four pillars packed in-cell) |
@@ -703,7 +707,7 @@ print("pieces", len(cells))
 | Plot `N` | 4…64 |
 | Height | 20 |
 | Dense cells | 81920 (64×64×20) |
-| Piece type | 0…123 (`PieceCount-1`) |
+| Piece type | 0…127 (`PieceCount-1`) |
 | Rotation | 0…3 |
 | Cables | ≤ 2048 |
 | Pipes | ≤ 8000 |
@@ -956,6 +960,13 @@ minimum corner, with `m` finishes and `d` door targets, plus an informational
 `.txt` Share world or part file into the clipboard and enters Stamp mode, so parts travel
 between players and also load as small worlds in the HTML sandbox. The Share dialog's
 *Save file* / *Open file* write and read whole worlds as `Exports\<id>.world.json`.
+
+**Imported props.** Pieces 105–107, 109–112, 115 and 122–126 are Retro Official models
+(OFFICE and URBAN packs) converted by `tools/prepare_props.py` into `src/generated/prop_models.inc`
+and 128×128 texture layers in `prop_textures.inc`; material ids `PropMaterialBase + n` (59…)
+double as texture-array layers, and tileable surfaces (carpet, plaster, pool tile, grating,
+metal, office door) use planar cell UVs. `tools/embed_props.py` packs the same meshes and
+textures into the web build. `assets/props/manifest.json` records sources and hashes.
 
 The same seed and plot size always produce the same construct; *Shuffle seed* draws a
 new one. `--smoke-test` validates every generator at 12 and 24 tiles, mirror

@@ -10,23 +10,23 @@ doc = (ROOT / "docs" / "World-API.md").read_text(encoding="utf-8")
 
 tn = re.findall(r"'([^']+)'", re.search(r"TN=\[(.*?)\];", html, re.S).group(1))
 names = re.findall(r'"([^"]+)"', re.search(r"names\[\]=\{(.*?)\};", cat, re.S).group(1))
-assert len(tn) == 124 and tn == names, f"catalog mismatch TN={len(tn)} names={len(names)}"
+assert len(tn) == 128 and tn == names, f"catalog mismatch TN={len(tn)} names={len(names)}"
 
 fw = re.search(r"function footprintW\(t\)\{[^}]+\}", html).group(0)
 fd = re.search(r"function footprintD\(t\)\{[^}]+\}", html).group(0)
 fh = re.search(r"function footprintH\(t\)\{[^}]+\}", html).group(0)
 assert "94" not in fw + fd + fh, "Quadpier must be 1-cell in HTML"
-assert "78" in fw and "58" in fd
+assert "78" in fw and "124" in fw and "58" in fd and "112" in fh
 
 rot = re.search(r"function eachFootprintCell\(.*?\{.*?for\(let i=0;i<r;i\+\+\)\{([^}]+)\}", html, re.S)
 assert rot and "nx=dz" in rot.group(1) and "dz=-dx" in rot.group(1), "HTML footprint rotation must match native"
 
 for needle in (
-    "PieceCount = 124",
+    "PieceCount = 128",
     "MON4",
     "MNS4",
     "MaxPlot = 64",
-    "0…123",
+    "0…127",
     "stride:64",
     "Quadpier",
     "81920",
@@ -36,4 +36,4 @@ for needle in (
 assert "currently **0â€¦71**" not in doc
 assert "PieceCount = 68" not in doc
 assert "emits `N` / `c` / `cab` only" not in doc
-print("OK: catalog 124 synced, footprints match native, World-API markers present")
+print("OK: catalog 128 synced, footprints match native, World-API markers present")

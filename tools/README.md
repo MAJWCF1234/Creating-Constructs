@@ -4,11 +4,11 @@
 
 `audit_catalog.py` runs the native Vulkan catalog checker, verifies its CSV/JSON results, and creates a lossless preview gallery. Build the game first, then run `py -3 tools/audit_catalog.py`. Its native fixtures never save over the player world. Use `--summarize-only --output <folder>` to regenerate an existing gallery.
 
-`prepare_nature.py` imports the local Retro Official nature models and records their sources. `import_topography.py` imports the topography textures. `import_brick.py` imports lime-mortar red clay brick (side/top/mossy/stairs/arch/tudor) from `O:\Assets\Textures\…` into `src/generated/brick_textures.inc` + HTML. The embed tools support the standalone web build.
+`prepare_nature.py` imports the local Retro Official nature models and records their sources. `prepare_props.py` imports the OFFICE / URBAN props and tileable library textures for the Cyber and Liminal tabs into `src/generated/prop_*.inc` + `prop_shader.glsl`; run `embed_props.py` afterwards to refresh the web build. `import_topography.py` imports the topography textures. `import_brick.py` imports lime-mortar red clay brick (side/top/mossy/stairs/arch/tudor) from `O:\Assets\Textures\…` into `src/generated/brick_textures.inc` + HTML. The embed tools support the standalone web build.
 
 `prepare_audio.py` prepares the soundtrack/ambience bank. `remaster_movement.py` packs the approved mastered movement WAVs under `assets/audio/movement`, preserving the first 17 clips byte for byte. `--verify` checks the existing 41-clip bank without changing it.
 
-World generators: `tinyworld_to_mns.py`, `write_concept_save.py`, `make_reference_atrium.py`, `make_overgrown_construct.py`. Format contract: `docs/World-API.md` (MON4 / MNS4 / Share `stride:64` / pieces `0…123`).
+World generators: `tinyworld_to_mns.py`, `write_concept_save.py`, `make_reference_atrium.py`, `make_overgrown_construct.py`. Format contract: `docs/World-API.md` (MON4 / MNS4 / Share `stride:64` / pieces `0…127`).
 
 Retired one-shot scripts (HTML patch/probe fragments, itch cover/background generators, GDI probe) are recoverable from `output/maintenance/retired-one-off-tools.zip`; its adjacent JSON records SHA-256 hashes. They are historical tools, not build dependencies.
 
