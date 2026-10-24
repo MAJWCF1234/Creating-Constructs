@@ -11,6 +11,9 @@ Offline sandbox for pouring concrete volumes, planting nature, and running pipes
 
 - Click / drag to place, Shift+click or X to erase, R to rotate
 - Escape opens the main / pause menu; arrows + Enter navigate it. Gamepad Start opens/resumes, D-pad + A select, B goes back.
+- Build tools (native): B cycles Brush / Box / Select — two clicks fill, erase or copy a volume; P paints finishes onto existing pieces; Ctrl+V stamps the copied region (R turns it); N mirrors placements across X, Z or both; Page Up / Down raise a build plane, Home clears it
+- Generate (native): G opens five seeded construct generators — tower, cloister, terraces, ruins, megastructure deck; Undo restores the previous plot
+- Atmosphere (native): K runs a four-minute day cycle, O slowly turns the build camera for showcases, T lights a torch while walking at night
 - Tab for walk mode · WASD · Space jump · H hide UI · M mute
 - Service doors (Detail): F or left click while walking to open/close; gamepad X. Doors reopen if the player obstructs closing.
 

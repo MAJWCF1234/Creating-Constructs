@@ -444,7 +444,8 @@ rightv=norm(cross(forward,{0,1,0}));upv=cross(rightv,forward);
 if(walk&&fabsf(camRoll)>.0001f){float cr=cosf(camRoll),sr=sinf(camRoll);V nr=rightv*cr+upv*sr,nu=upv*cr-rightv*sr;rightv=nr;upv=nu;}
 float aspect=extent.width/(float)extent.height,f=1/tanf((walk?fieldOfView:buildFov)*PI/360),A=300.f/(300.f-.1f),B=-.1f*A;
 V rows[]={rightv*(f/aspect),upv*(-f),forward*A,forward};float offsets[]={-dot(rows[0],eye),-dot(rows[1],eye),B-dot(rows[2],eye),-dot(forward,eye)};for(int r=0;r<4;r++){gpu.vp[r]=rows[r].x;gpu.vp[4+r]=rows[r].y;gpu.vp[8+r]=rows[r].z;gpu.vp[12+r]=offsets[r];}}
-void pick(){hit=hasAdd=hasRem=false;if(walk)return;float f=tanf(buildFov*PI/360.f),a=extent.width/(float)extent.height;V d=norm(forward+rightv*((mouseX/(float)vw*2-1)*f*a)+upv*((1-mouseY/(float)vh*2)*f));V prev{-999,-999,-999};for(float t=.1;t<120;t+=.035f){V p=eye+d*t,q{floorf(p.x),floorf(p.y),floorf(p.z)};if(q.x==prev.x&&q.y==prev.y&&q.z==prev.z)continue;if(q.y<0){if(inb((int)prev.x,(int)prev.y,(int)prev.z)){hit=hasAdd=true;hitAdd=prev;hitPoint=p;}return;}int ix=(int)q.x,iy=(int)q.y,iz=(int)q.z,ox,oy,oz;if(footprintRoot(ix,iy,iz,ox,oy,oz)&&!(drag&&placed[idx(ox,oy,oz)])){hit=hasRem=true;hitRem={(float)ox,(float)oy,(float)oz};hitPoint=p;hasAdd=inb((int)prev.x,(int)prev.y,(int)prev.z);hitAdd=prev;return;}prev=q;}}
+bool toolEdit(bool remove);void mirrorPlace(int x,int y,int z,int t,int r,int recipe);void mirrorRemove(int x,int y,int z,int t,int r);bool buildPlaneHit(V a,V b);void toolGuides();void toolPreview(bool remove);void advanceDayCycle(float dt);void applyTorch();extern int tool;extern bool turntable;
+void pick(){hit=hasAdd=hasRem=false;if(walk)return;float f=tanf(buildFov*PI/360.f),a=extent.width/(float)extent.height;V d=norm(forward+rightv*((mouseX/(float)vw*2-1)*f*a)+upv*((1-mouseY/(float)vh*2)*f));V prev{-999,-999,-999},last=eye;for(float t=.1;t<120;t+=.035f){V p=eye+d*t;if(buildPlaneHit(last,p))return;last=p;V q{floorf(p.x),floorf(p.y),floorf(p.z)};if(q.x==prev.x&&q.y==prev.y&&q.z==prev.z)continue;if(q.y<0){if(inb((int)prev.x,(int)prev.y,(int)prev.z)){hit=hasAdd=true;hitAdd=prev;hitPoint=p;}return;}int ix=(int)q.x,iy=(int)q.y,iz=(int)q.z,ox,oy,oz;if(footprintRoot(ix,iy,iz,ox,oy,oz)&&!(drag&&placed[idx(ox,oy,oz)])){hit=hasRem=true;hitRem={(float)ox,(float)oy,(float)oz};hitPoint=p;hasAdd=inb((int)prev.x,(int)prev.y,(int)prev.z);hitAdd=prev;return;}prev=q;}}
 V anchor(){if(hasRem&&hasAdd)return (hitAdd+hitRem)*.5f+V{.5,.5,.5};if(hasRem)return hitRem+V{.5,1,.5};return hitAdd+V{.5,.05,.5};}
 bool wallFlushPiece(int t){
  // Face-mounted openings, screens, and wall vegetation — open/−Z side sits against the hit wall.
@@ -458,8 +459,10 @@ void autoFacing(int& t,int& r){
 }
 void edit(){if(!hit)return;bool remove=wantErase();if(selected==16){V a=anchor();if(remove){int best=-1;float bd=1.3;for(int i=0;i<(int)world.cables.size();i++){float d=std::min(len(world.cables[i].a-a),len(world.cables[i].b-a));if(d<bd){bd=d;best=i;}}if(best>=0){world.cables.erase(world.cables.begin()+best);audioEdit(true,16,a);dirty=true;save();}}else if(!pendingCable){anchorA=a;pendingCable=true;audioEvent(A_click);}else{if(len(a-anchorA)>.4&&world.cables.size()<2048){world.cables.push_back({anchorA,a});audioEdit(false,16,a);dirty=true;save();}pendingCable=false;}return;}
 if(isPipeTool(selected)){pipeEdit();return;}
-if(remove&&hasRem){audioEdit(true,get((int)hitRem.x,(int)hitRem.y,(int)hitRem.z).t,hitRem+V{.5f,.5f,.5f});int ax=(int)hitRem.x,ay=(int)hitRem.y,az=(int)hitRem.z;auto gone=get(ax,ay,az);world.pipes.erase(std::remove_if(world.pipes.begin(),world.pipes.end(),[&](const PipeNode& p){return footprintCovers(ax,ay,az,gone.t,gone.r,p.cx,p.cy,p.cz);}),world.pipes.end());put(ax,ay,az,-1);dirty=true;save();}else if(!remove&&hasAdd){int t=selected,r=rotation;autoFacing(t,r);int ax=(int)hitAdd.x,ay=(int)hitAdd.y,az=(int)hitAdd.z;if(canPlace(ax,ay,az,t,r)){audioEdit(false,t,hitAdd+V{.5f,.5f,.5f});put(ax,ay,az,t,r);if(surfaceRecipe())world.surfaces[idx(ax,ay,az)]=(uint16_t)surfaceRecipe();placed[idx(ax,ay,az)]=true;lastPlaced=t;dirty=true;save();}}}
+if(toolEdit(remove))return;
+if(remove&&hasRem){audioEdit(true,get((int)hitRem.x,(int)hitRem.y,(int)hitRem.z).t,hitRem+V{.5f,.5f,.5f});int ax=(int)hitRem.x,ay=(int)hitRem.y,az=(int)hitRem.z;auto gone=get(ax,ay,az);world.pipes.erase(std::remove_if(world.pipes.begin(),world.pipes.end(),[&](const PipeNode& p){return footprintCovers(ax,ay,az,gone.t,gone.r,p.cx,p.cy,p.cz);}),world.pipes.end());put(ax,ay,az,-1);mirrorRemove(ax,ay,az,gone.t,gone.r);dirty=true;save();}else if(!remove&&hasAdd){int t=selected,r=rotation;autoFacing(t,r);int ax=(int)hitAdd.x,ay=(int)hitAdd.y,az=(int)hitAdd.z;if(canPlace(ax,ay,az,t,r)){audioEdit(false,t,hitAdd+V{.5f,.5f,.5f});put(ax,ay,az,t,r);if(surfaceRecipe())world.surfaces[idx(ax,ay,az)]=(uint16_t)surfaceRecipe();placed[idx(ax,ay,az)]=true;mirrorPlace(ax,ay,az,t,r,surfaceRecipe());lastPlaced=t;dirty=true;save();}}}
 #include "render/placement.inc"
+#include "world/tools.inc"
 void toggleWalk(){walk=!walk;pendingCable=false;drag=false;camDrag=0;ReleaseCapture();if(walk){player=hasNamedWalkSpawn&&freeAt(namedWalkSpawn,1.6f)?namedWalkSpawn:V{world.n/2.f,0,world.n+1.8f};velY=hx=hz=wallRun=camRoll=0;yaw=pitch=0;grounded=true;spaceHeld=false;}InvalidateRect(mainWindow,nullptr,FALSE);}
 void raisePanels();
 #include "world/doors.inc"
@@ -488,14 +491,15 @@ if(rain){
   V side=rightv*w;quad(a-side,a+side,b+side,b-side,14);
  }
 }
-bool remove=wantErase();if(!walk&&hit&&captureFile.empty()&&mouseInView&&!camDrag){if(remove&&hasRem){origin=hitRem+V{.5,.5,.5};box(1.025,1.025,1.025,0,0,0,10);origin={};}else if(!remove)placementPreview();if(pendingCable){V b=anchor();tube(anchorA,b,.024,10);}if(isPipeTool(selected)&&hasRem){PipeNode g;if(pipeHitCell(g)){V c=pipeCenter(g);tube(c,c+PipeN[g.face]*(-.02f),.02f,10);}}}
+bool remove=wantErase();if(!walk&&captureFile.empty()&&!menuActive)toolGuides();
+if(!walk&&hit&&captureFile.empty()&&mouseInView&&!camDrag){if(tool&&selected!=16&&!isPipeTool(selected))toolPreview(remove);else if(remove&&hasRem){origin=hitRem+V{.5,.5,.5};box(1.025,1.025,1.025,0,0,0,10);origin={};}else if(!remove)placementPreview();if(pendingCable){V b=anchor();tube(anchorA,b,.024,10);}if(isPipeTool(selected)&&hasRem){PipeNode g;if(pipeHitCell(g)){V c=pipeCenter(g);tube(c,c+PipeN[g.face]*(-.02f),.02f,10);}}}
 vertices.insert(vertices.end(),transparent.begin(),transparent.end());size_t bytes=vertices.size()*sizeof(Vertex);if((staticCount+vertices.size())*sizeof(Vertex)>maxVertexBytes)fail("Dynamic geometry capacity exceeded");memcpy((char*)vertexMap+staticCount*sizeof(Vertex),vertices.data(),bytes);vertexCount=staticCount+(uint32_t)vertices.size();}
 float cameraWaterDepth(V camera){
  int x=(int)floorf(camera.x),y=(int)floorf(camera.y),z=(int)floorf(camera.z);auto c=get(x,y,z);
  if(c.t==40){int top=y;while(top+1<WorldHeight&&get(x,top+1,z).t==40)top++;return std::max(0.f,top+.85f-camera.y);}
  if(c.t==24&&fabsf(camera.x-x-.5f)<.4f&&fabsf(camera.z-z-.5f)<.4f)return std::max(0.f,y+.32f-camera.y);return 0;
 }
-void render(float dt,float time){if(smoke&&frames>=116)dt=1.f/60;if(benchmarkRun)perfCpuStart=perfClock();if(vw<1||vh<1||IsIconic(mainWindow))return;if(rebuildSwap){vkcheck(vkDeviceWaitIdle(device),"Wait for resize");destroySwap();createSwap();raisePanels();}vkcheck(vkWaitForFences(device,1,&fence,VK_TRUE,UINT64_MAX),"Wait for frame");if(benchmarkRun)perfBuildStart=perfClock();if(dirty)refresh();if(!menuActive)advanceDoors(dt);camera(dt);updateDoorHint();pick();if(menuActive)hit=hasAdd=hasRem=false;dynamicGeometry(time);
+void render(float dt,float time){if(smoke&&frames>=116)dt=1.f/60;if(benchmarkRun)perfCpuStart=perfClock();if(vw<1||vh<1||IsIconic(mainWindow))return;if(rebuildSwap){vkcheck(vkDeviceWaitIdle(device),"Wait for resize");destroySwap();createSwap();raisePanels();}vkcheck(vkWaitForFences(device,1,&fence,VK_TRUE,UINT64_MAX),"Wait for frame");if(benchmarkRun)perfBuildStart=perfClock();if(dirty)refresh();if(!menuActive){advanceDoors(dt);advanceDayCycle(dt);if(turntable&&!walk)theta+=dt*.22f;}camera(dt);updateDoorHint();pick();if(menuActive)hit=hasAdd=hasRem=false;dynamicGeometry(time);
 // Literally monolith.html sun() + MOODS (lines 236-246)
 float el=sunHeight*PI/180,az=sunAngle*PI/180,low=night?0.f:std::max(0.f,1.f-el/.55f);
 if(mood<0||mood>4)mood=0;float si=moodSunI[mood],hi=moodHi[mood];
@@ -514,6 +518,7 @@ gpu.sky={hor.x,hor.y,hor.z,night?1.f:0.f};
 gpu.atmos={top.x,top.y,top.z,night?.1f:(rain?moodSat*.4f:moodSat)}; // PQ.uniforms.sat
 gpu.cfg={exposure, (rain?.012f:0.f)+fog*fog*.09f+.003f+clouds*.045f, ao?1.f:0.f, (float)world.n}; // FogExp2 density
 for(int i=0;i<16;i++){float kind=gpu.lamps[i].w;bool on=(gpu.lamps[i].x||gpu.lamps[i].y||gpu.lamps[i].z)&&night;int type=lampKinds[i];gpu.lamps[i].w=on?(type==95?104.5f:type==101?204.5f:type==102?304.5f:type==100?404.5f:type==103?504.5f:4.5f):0.f;} // w>=100 = downward angle cone
+applyTorch();
 // lighting.y: 1=rain ripples, .55=wind-only foliage sway; lighting.w=cloud density
 gpu.lighting={night?.28f:hi*1.25f,rain?1.f:(wind?.55f:0.f),cameraWaterDepth(eye),clouds};
 memcpy(stateMap,&gpu,sizeof(gpu));

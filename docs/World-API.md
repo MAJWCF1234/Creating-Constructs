@@ -2,7 +2,7 @@
 
 **Core world contract (native + HTML):** plots support **64×64** with Share JSON `stride:64`; autosave writes **MON4** (`0x344F4E4D`); named snapshots write **MNS4** (`0x34534E4D`). MNS4 keeps the MNS3 64×64×20 cell layout and appends `uint32_t pipeCount` plus packed 9-byte `PipeNode` records after the cables. MNS1 / MNS2 / MNS3 remain readable. Native Share JSON round-trips `pipes` (including `rot` and `auto`). **`PieceCount = 104`** (IDs `0…103`).
 
-**Updated: October 21, 2026.** Native extensions include material recipes, named viewpoints, animated service-door targets, and the main / pause menu. The shared piece catalog does not imply feature parity between native and HTML.
+**Updated: October 24, 2026.** Native extensions include material recipes, named viewpoints, animated service-door targets, the main / pause menu, and the build tools / construct generators in section 16.4. The shared piece catalog does not imply feature parity between native and HTML.
 
 This document is the full contract for writing worlds from code: Share JSON, named saves (`.mns`), autosave (`world.bin`), cell keys, piece IDs, cables, and face-mounted pipes.
 
@@ -875,6 +875,7 @@ Windows command line, for example `--review-save="N:\Monolith maker\Saves\refere
 | `--validate` | Enable Vulkan validation when available. |
 | `--smoke-test --validate --verify-blur` | Use isolated `test-world.bin` / `TestSaves`; run menu, save, door, and existing regression checks for 250 frames. |
 | `--catalog-audit --catalog-contracts --audit-dir="folder"` | Generate catalog previews and contract audit results. |
+| `--generate=<0…4> [--seed=<n>] [--plot=<4…64>]` | Open an isolated review session (`review-world.bin` / `ReviewSaves`) on a generated construct (section 16.4); combine with `--capture --fixed-frame` for a six-frame still. The player autosave is never written. |
 
 Direct snapshot, review, capture, benchmark, audit, and audio-test launches bypass
 the ordinary startup menu. Escape can still open the menu in an interactive review.
@@ -892,14 +893,47 @@ isolated review session. Menu previews composite the Vulkan readback with the sa
 native panel painter; separate Windows edit controls are not included in these QA
 images.
 
+### 16.4 Native build tools and construct generators
+
+These are editor features. They change the authored world only through the same
+placement rules (`canPlace`, footprints, surfaces, door targets), so everything they
+produce round-trips through MON4 / MNS4 / Share JSON unchanged.
+
+| Tool | Keys | Behavior |
+|------|------|----------|
+| Box | B (Brush → Box → Select) | Two clicks pick opposite corners; the volume fills with the selected piece and rotation, or erases every piece touching it with Shift / X / Erase. One undo step. |
+| Select → Stamp | B to Select, Ctrl+V to re-enter Stamp | Two clicks copy roots, finishes (`m`) and door targets (`d`) into a clipboard; Stamp places the copy with its minimum corner at the aimed cell. R turns the copy in quarter steps; multi-cell footprints re-anchor so covered cells stay consistent. Esc leaves Stamp. |
+| Paint | P (switches to the Material tab) | Click or drag applies the chosen finish recipe to existing pieces; *Original material* clears it. |
+| Mirror | N | Off / X / Z / X+Z about the plot centre. Mirrored placements get mirrored rotations (`r → (4-r)%4` across X, `(6-r)%4` across Z); mirrored erase and paint follow the same cells. |
+| Build plane | Page Up / Page Down / Home | A grid at layer `y` intercepts the pick ray inside the plot, so pieces land on that layer in open air. Occupied plane cells report the existing piece. |
+| Day cycle | K | One full day every four minutes; `sunAngle` / `sunHeight` follow the arc and `night` toggles after dusk. Not persisted. |
+| Turntable | O | Slowly orbits the build camera for showcases. |
+| Torch | T (walk mode, night) | Borrows fixture slot 15 for a light ahead of the walker; releasing it rebuilds the fixture list. |
+
+Generators (G, or World → *Generate a construct*) replace the plot with a seeded
+construct and record one undo step. Plots smaller than 12 widen to 12 tiles.
+
+| Generator | Content |
+|-----------|---------|
+| Brutalist tower | Setback board-form core, pilotis base, ribbon windows, cantilevers, roof pergola and amber light, plinth plate and planting |
+| Monastery cloister | Slit outer wall with a doorway, columned arcade with arches, slab roof and pendants, courtyard pool, birches, benches, planters |
+| Terraced hillside | Stepped aggregate terraces, random stairs between steps, grass / moss / shrubs / pines / boulders / logs, a still basin at the foot |
+| Ruined colonnade | Broken columns and beams, half walls with ivy, moss, grass, boulders, logs, mushrooms, perimeter trees |
+| Megastructure deck | Pilotis under a waffle deck, 2×2 lightwells, cores with bridges and floor plates, deck railings and lights, moss / grass / puddles below |
+
+The same seed and plot size always produce the same construct; *Shuffle seed* draws a
+new one. `--smoke-test` validates every generator at 12 and 24 tiles, mirror
+re-anchoring of the 2×2 doorway, box fill / erase counts, stamp rotation, paint,
+build-plane picking, the day cycle and the torch.
+
 ## 17. Validation and authored examples
 
 - `py -3 tools/verify_world_contract.py`: catalog, footprint, and documentation checks.
 - `Play/Check-Game.cmd`: native smoke checks followed by the full catalog audit.
 - Smoke checks cover menu click routing, keyboard navigation, input / gravity pause,
   save loading from the menu, real mixer sliders, and pause / resume, alongside
-  door rotations, sprint blocking, obstruction reversal, state round-trips, and
-  live Vulkan poses.
+  door rotations, sprint blocking, obstruction reversal, state round-trips,
+  live Vulkan poses, and the build tools / generators of section 16.4.
 - `tools/make_test_garden.py` generates editable part / rotation, material, neighbor
   adaptation, and liminal service-court saves.
 - `tools/make_reference_atrium.py` and `tools/make_door_workshop.py` generate normal

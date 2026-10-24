@@ -2,14 +2,14 @@
 
 The native game uses one C++ translation unit, `src/main.cpp`. Related include
 fragments are grouped by subsystem and included in dependency order. The cleanup
-consolidated **67 source files into 41**; `main.cpp` is the only file directly in
+consolidated **67 source files into 41** (42 with the later `world/tools.inc`); `main.cpp` is the only file directly in
 `src`. The editor configuration lives at the project root in `.vscode`.
 
 | Location | Contents |
 |----------|----------|
 | `src/main.cpp` | Core world, geometry, physics, Vulkan setup, and frame loop |
 | `src/audio/mixer.inc` | Mixer, audio events, and mood soundtrack definitions |
-| `src/world/` | State/material recipes, saves, pieces, vegetation, landscape, pipes, doors, export, and shared solidity |
+| `src/world/` | State/material recipes, saves, pieces, vegetation, landscape, pipes, doors, export, shared solidity, and build tools (`tools.inc`: box / select / stamp / paint, symmetry, build plane, day cycle, torch, construct generators) |
 | `src/render/` | Texture baking, foliage tracing, postprocessing, frame/readback support, thumbnails, and placement previews |
 | `src/platform/windows.inc` | Win32 windows, input, gamepad handling, launch flags, and application lifecycle |
 | `src/platform/ui.inc` | Save-browser helpers and the native editor/menu composition |

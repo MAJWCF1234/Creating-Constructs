@@ -462,6 +462,12 @@ void uiSelfTest(){
  uiModal=5;rebuildActions();check(has(52)&&has(53)&&has(54)&&has(22),"Viewpoints exposes save, paging and close controls");
  uiModal=1;rebuildActions();check(has(22),"Controls dialog provides Close");
  uiModal=2;rebuildActions();check(has(22)&&has(23),"Share dialog provides Load and Close");
+ uiModal=8;rebuildActions();check(has(90)&&has(90+GeneratorCount-1)&&has(95)&&has(22),"Generate dialog lists every construct generator with shuffle and close");
+ bool oldTools=toolsExpanded;uiModal=0;toolsExpanded=true;atmosphereExpanded=true;rebuildActions();
+ check(has(70)&&has(71)&&has(72)&&has(73)&&has(74)&&has(75)&&has(76)&&has(77)&&has(78)&&has(79),"Tools section exposes brush, box, select, paint, mirror, build plane, stamp and generate");
+ check(has(80)&&has(81),"Atmosphere exposes the day cycle and turntable toggles");
+ worldExpanded=true;rebuildActions();check(has(79),"World also reaches the generator");
+ bool oldWalk=walk;walk=true;rebuildActions();check(has(82)&&!has(70),"walk panel offers the torch and hides build tools");walk=oldWalk;toolsExpanded=oldTools;
  audioExpanded=oldAudio;atmosphereExpanded=oldAtmosphere;worldExpanded=oldWorld;settingsExpanded=oldSettings;camScheme=oldScheme;uiModal=oldModal;rebuildActions();
 }
 
@@ -579,3 +585,48 @@ void catalogAuditStart(const std::wstring& args){
 }
 bool catalogAuditAdvance(){if(capturePending)return true;catalogAuditIndex++;if(catalogAuditIndex>=catalogAuditCases.size()){if(catalogAuditLog){fclose(catalogAuditLog);catalogAuditLog=nullptr;}log("Catalog Vulkan previews completed");return false;}catalogAuditSetup();return true;}
 
+
+// Build tools: box fill / erase, symmetry, select + stamp, paint, build plane, generators, day cycle and torch.
+void toolsSelfTest(){
+ World preserved=world;SavedView oldView=savedView();int oldTool=tool,oldMirror=mirrorMode,oldPlane=buildPlane,oldSelected=selected,oldRotation=rotation,oldStyle=chosenSurface,oldSurfaceRotation=surfaceRotation,oldScale=surfaceScale,oldCategory=category;
+ bool oldErasing=erasing,oldWalk=walk,oldNight=night,oldDay=dayCycle,oldTorch=torch;
+ auto count=[](){int n=0;for(auto c:world.c)if(c.t>=0)n++;return n;};
+ auto footprintsValid=[](){for(int x=0;x<world.n;x++)for(int z=0;z<world.n;z++)for(int y=0;y<WorldHeight;y++){auto c=get(x,y,z);if(c.t<0)continue;if(c.t>=PieceCount||c.r<0||c.r>3||c.t==16||isPipeTool(c.t))return false;bool ok=true;eachFootprintCell(x,y,z,c.t,c.r,[&](int cx,int cy,int cz){if(!inb(cx,cy,cz)||((cx!=x||cy!=y||cz!=z)&&get(cx,cy,cz).t>=0))ok=false;});if(!ok)return false;}return true;};
+ world=World{};world.n=16;history.clear();redoStack.clear();erasing=false;walk=false;mirrorMode=0;buildPlane=-1;chosenSurface=0;surfaceRotation=0;surfaceScale=1;
+ tool=1;selected=0;rotation=0;hit=hasAdd=true;hasRem=false;hitAdd={2,0,2};edit();check(boxArmed&&count()==0,"box tool arms on the first corner without placing");
+ hitAdd={5,2,4};edit();check(!boxArmed&&count()==36,"box tool fills the whole 4 x 3 x 3 volume");
+ check(history.size()==1,"box fill records a single undo step");undoEdit();check(count()==0,"undo removes the entire box fill");redoEdit();check(count()==36,"redo restores the box fill");
+ erasing=true;hasAdd=false;hasRem=true;hitRem={2,2,2};edit();hitRem={5,2,4};edit();erasing=false;check(count()==24,"box erase clears only the chosen layer");
+ world=World{};world.n=16;tool=0;mirrorMode=1;hit=hasAdd=true;hasRem=false;hitAdd={2,0,5};selected=4;rotation=1;edit();
+ check(get(2,0,5).t==4&&get(13,0,5).t==4&&get(13,0,5).r==3,"X mirror places the reflected slope with mirrored facing");
+ mirrorMode=2;hitAdd={2,0,2};rotation=0;edit();check(get(2,0,13).t==4&&get(2,0,13).r==2,"Z mirror flips the slope to face the other way");
+ mirrorMode=3;hitAdd={3,1,3};selected=23;rotation=0;edit();
+ check(get(3,1,3).t==23&&get(11,1,3).t==23&&get(11,1,3).r==0&&get(4,1,12).t==23&&get(4,1,12).r==2&&get(12,1,12).t==23&&get(12,1,12).r==2&&footprintsValid(),"X+Z mirror re-anchors the 2 x 2 doorway in all four quadrants");
+ mirrorMode=1;erasing=true;hasAdd=false;hasRem=true;hitRem={3,1,3};edit();erasing=false;check(get(3,1,3).t<0&&get(11,1,3).t<0&&get(4,1,12).t==23&&get(12,1,12).t==23,"mirrored erase removes the reflected doorway only");
+ world=World{};world.n=16;mirrorMode=0;put(1,0,1,0);put(2,0,1,4,1);world.surfaces[idx(1,0,1)]=5;put(1,1,1,96);world.doors[idx(1,1,1)]=1;
+ tool=2;hit=hasAdd=true;hasRem=false;hitAdd={1,0,1};edit();hitAdd={2,2,1};edit();
+ check(tool==4&&clipboard.size()==3&&clipW==2&&clipH==3&&clipD==1,"select copies roots, finishes and door states then enters stamp mode");
+ stampRot=0;hitAdd={6,0,6};edit();check(get(6,0,6).t==0&&surfaceAt(idx(6,0,6))==5&&get(7,0,6).t==4&&get(7,0,6).r==1&&get(6,1,6).t==96&&world.doors.count(idx(6,1,6))&&footprintsValid(),"stamp reproduces pieces, finish and door state at the new corner");
+ stampRot=1;hitAdd={10,0,10};edit();check(get(10,0,11).t==0&&get(10,0,10).t==4&&get(10,0,10).r==2&&get(10,1,11).t==96&&footprintsValid(),"rotated stamp turns offsets and facings together");
+ stampRot=0;hitAdd={14,0,14};edit();check(get(14,0,14).t==0&&get(15,0,14).t==4,"stamp near the plot edge places what fits");
+ setTool(0);keys[VK_CONTROL]=true;keyDown('V',false);keys[VK_CONTROL]=keys['V']=false;check(tool==4&&uiModal==0,"Ctrl+V re-enters stamp mode without opening viewpoints");keyDown(VK_ESCAPE,false);keys[VK_ESCAPE]=false;check(tool==0&&!menuActive,"Escape leaves stamp mode before reaching the pause menu");
+ tool=3;chosenSurface=3;surfaceRotation=0;surfaceScale=1;hit=hasRem=true;hasAdd=false;hitRem={6,0,6};edit();check(surfaceAt(idx(6,0,6))==(3+128),"paint applies the chosen finish to an existing piece");
+ chosenSurface=0;edit();check(surfaceAt(idx(6,0,6))==0,"painting Original material clears the finish");
+ mirrorMode=1;chosenSurface=2;hitRem={6,0,6};edit();check(surfaceAt(idx(9,0,6))==0&&surfaceAt(idx(6,0,6))==(2+128),"mirrored paint touches only pieces present at the reflection");put(9,0,6,0);edit();check(surfaceAt(idx(9,0,6))==(2+128),"mirrored paint reaches the reflected piece");mirrorMode=0;chosenSurface=0;
+ tool=0;buildPlane=3;hit=hasAdd=hasRem=false;check(buildPlaneHit({5.5f,10,5.5f},{5.5f,-1,5.5f})&&hasAdd&&!hasRem&&hitAdd.x==5&&hitAdd.y==3&&hitAdd.z==5,"build plane catches the ray at the chosen layer");
+ put(5,3,5,0);check(buildPlaneHit({5.5f,10,5.5f},{5.5f,-1,5.5f})&&hasRem&&hitRem.y==3,"an occupied plane cell reports the piece instead");
+ check(!buildPlaneHit({5.5f,10,5.5f},{5.5f,4,5.5f})&&!buildPlaneHit({30,10,30},{30,-1,30}),"rays that miss the plane or the plot leave the pick untouched");buildPlane=-1;
+ for(int kind=0;kind<GeneratorCount;kind++){for(int size:{12,24}){world=World{};world.n=size;generateWorld(kind,1234u+(uint32_t)kind*7u);int placed=count();bool valid=footprintsValid();for(auto p:world.pipes)valid=valid&&validPipeNode(p,world.n);
+  check(placed>40&&valid&&world.n==size,"construct generator produces a valid populated world");}}
+ world=World{};world.n=12;generateWorld(0,99);World first=world;world=World{};world.n=12;generateWorld(0,99);check(memcmp(first.c.data(),world.c.data(),sizeof(Cell)*WorldCells)==0,"generators are deterministic for a seed");
+ world=World{};world.n=12;generateWorld(1,99);check(memcmp(first.c.data(),world.c.data(),sizeof(Cell)*WorldCells)!=0,"different generators produce different constructs");
+ undoEdit();check(count()==0,"undo returns the plot that existed before generating");
+ world=World{};world.n=4;generateWorld(2,5);check(world.n==12&&footprintsValid(),"generators widen tiny plots to twelve tiles");
+ dayCycle=true;dayPhase=.7f;advanceDayCycle(1.f);check(night&&sunHeight>=4,"day cycle turns night after dusk");dayPhase=.2f;advanceDayCycle(1.f);check(!night&&sunHeight>40,"day cycle lifts the morning sun");
+ dayCycle=false;night=false;sunHeight=40;toggleDayCycle();check(dayCycle&&dayPhase>0&&dayPhase<.25f,"enabling the cycle resumes from the current sun height");dayCycle=false;
+ walk=true;torch=true;night=true;eye={3,1.5f,3};forward={0,0,-1};gpu.lamps[15]={0,0,0,0};applyTorch();check(gpu.lamps[15].w>0&&gpu.lamps[15].z<eye.z&&torchLit,"torch lights the spare fixture slot ahead of the walker");
+ torch=false;dirty=false;applyTorch();check(!torchLit&&dirty,"switching the torch off rebuilds the fixture list");
+ walk=oldWalk;night=oldNight;dayCycle=oldDay;torch=oldTorch;torchLit=false;
+ world=preserved;restoreViewpoint(oldView);tool=oldTool;boxArmed=false;mirrorMode=oldMirror;buildPlane=oldPlane;selected=oldSelected;rotation=oldRotation;chosenSurface=oldStyle;surfaceRotation=oldSurfaceRotation;surfaceScale=oldScale;category=oldCategory;erasing=oldErasing;clipboard.clear();stampRot=0;
+ hasAdd=hasRem=hit=false;placementStatus.clear();history.clear();redoStack.clear();std::fill(std::begin(placed),std::end(placed),false);dirty=true;
+}

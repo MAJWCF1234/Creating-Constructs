@@ -30,7 +30,10 @@ void drawSurfaceThumbnail(HDC dc,int x,int y,int style){
  }else{COLORREF colors[]={RGB(145,145,143),RGB(165,162,153),RGB(130,124,114),RGB(145,140,126)};RECT rr{x,y,x+44,y+44};fill(dc,rr,style<4?colors[style]:style==20?RGB(112,80,50):style==21?RGB(105,117,123):style==22?RGB(117,109,89):RGB(65,63,43));}
 }
 
-bool atmosphereExpanded=true,worldExpanded=false,audioExpanded=false,settingsExpanded=false;int uiModal=0,hoveredAction=-1,sliderActive=-1,dockScrollX=0;
+bool atmosphereExpanded=true,worldExpanded=false,audioExpanded=false,settingsExpanded=false,toolsExpanded=false;int uiModal=0,hoveredAction=-1,sliderActive=-1,dockScrollX=0;
+// Modal sizes shared by layout() and the painter: 1 Controls, 2 Share, 3 Saves, 5 Viewpoints, 6/7 menu pages, 8 Generate.
+int uiModalWidth(){return uiModal==2?560:620;}
+int uiModalHeight(){return uiModal==1?620:(uiModal==3||uiModal==5)?560:(uiModal==6||uiModal==7)?510:uiModal==8?480:330;}
 int menuSelection=0;
 RECT sliderBounds{};void showUiModal(int mode);void openShare();
 int uiDockWidth(){return std::min(840,W-32);}
@@ -39,8 +42,8 @@ int uiDockHeight(){return category==5?190:148;}
 int uiDockPieceStride(){return 96;}
 int uiDockMaxScroll(){int inner=uiDockWidth()-20;return std::max(0,uiDockPieceCount()*uiDockPieceStride()-inner);}
 void uiDockClampScroll(){dockScrollX=std::clamp(dockScrollX,0,uiDockMaxScroll());}
-// Collapsed base must clear Walk + Undo row + 4 section headers + bottom pad (SETTINGS was clipping at 216).
-int uiSideHeight(){return walk?64:258+(audioExpanded?169:0)+(atmosphereExpanded?348:0)+(worldExpanded?163:0)+(settingsExpanded?300:0);}
+// Collapsed base must clear Walk + Undo row + 5 section headers + bottom pad (SETTINGS was clipping at 216).
+int uiSideHeight(){return walk?64:294+(audioExpanded?169:0)+(atmosphereExpanded?384:0)+(worldExpanded?199:0)+(settingsExpanded?300:0)+(toolsExpanded?152:0);}
 void roundedBox(HDC dc,RECT r,COLORREF bg,COLORREF border,int radius=8){if(!RectVisible(dc,&r))return;HBRUSH b=CreateSolidBrush(bg);HPEN p=CreatePen(PS_SOLID,1,border);auto ob=SelectObject(dc,b),op=SelectObject(dc,p);RoundRect(dc,r.left,r.top,r.right,r.bottom,radius,radius);SelectObject(dc,ob);SelectObject(dc,op);DeleteObject(b);DeleteObject(p);}
 void glassPanel(HDC dc,RECT r){
  if(!dc||!RectVisible(dc,&r))return;int width=r.right-r.left,height=r.bottom-r.top;
@@ -90,16 +93,24 @@ void composeUi(HDC dc){
   }return;
  }
  if(!menuActive){
- glassPanel(dc,{10,10,294,walk?126:248});label(22,18,"Creating Constructs",fontTitle,ink);
- if(!walk){RECT hint{22,48,282,146};if(dc){SelectObject(dc,font);SetTextColor(dc,muted);SetBkMode(dc,TRANSPARENT);char tip[360];sprintf_s(tip,"Click builds; drag to fill. Doorway/Portal/Bridge need empty footprint cells — walk through the opening. %s removes. 1-9 pieces, ,/. tabs. R rotates. Q/E raise/lower. %s.",camScheme==1?"X or Erase":"Shift+click",camHelpText());if(!placementStatus.empty())sprintf_s(tip,"%s",placementStatus.c_str());uiDrawText(dc,tip,-1,&hint,DT_WORDBREAK);}sprintf_s(b,"%d pieces",pieces);label(22,150,b,font,muted);}
+ glassPanel(dc,{10,10,294,walk?160:248});label(22,18,"Creating Constructs",fontTitle,ink);
+ if(!walk){RECT hint{22,48,282,146};if(dc){SelectObject(dc,font);SetTextColor(dc,muted);SetBkMode(dc,TRANSPARENT);char tip[360];sprintf_s(tip,"Click builds; drag to fill. Doorway/Portal/Bridge need empty footprint cells — walk through the opening. %s removes. 1-9 pieces, ,/. tabs. R rotates. Q/E raise/lower. B box/select, P paint, N mirror. %s.",camScheme==1?"X or Erase":"Shift+click",camHelpText());if(!placementStatus.empty())sprintf_s(tip,"%s",placementStatus.c_str());uiDrawText(dc,tip,-1,&hint,DT_WORDBREAK);}label(22,150,toolSummary().c_str(),font,muted);}
  button({22,walk?53:175,140,walk?79:201},"Controls (?)",24);button({150,walk?53:175,282,walk?79:201},"Saves",30);
  if(!walk){button({22,208,282,236},"Viewpoints (V)",51);}
- if(walk&&!doorHint.empty())label(22,96,doorHint.c_str(),fontBold,ink);
+ if(walk)button({22,86,282,112},torch?"Torch: on (T)":"Torch (T)",82,torch);
+ if(walk&&!doorHint.empty())label(22,122,doorHint.c_str(),fontBold,ink);
  int x=W-222,y=22;glassPanel(dc,{x,10,x+212,10+uiSideHeight()});x+=11;
  button({x,y,x+190,y+36},walk?"Back to building (Tab)":"Walk inside (Tab)",1,false,true);y+=44;
  auto slider=[&](const char* name,float value,int id){label(x,y,name,font,ink);y+=21;RECT area{x,y-7,x+190,y+14};actions.push_back({area,id});if(dc){RECT track{x+3,y,x+187,y+4};fill(dc,track,RGB(92,92,95));RECT progress=track;progress.right=x+3+(int)(184*std::clamp(value,0.f,1.f));fill(dc,progress,accent);int cx=progress.right;HBRUSH brush=CreateSolidBrush(accent);auto old=SelectObject(dc,brush),pen=SelectObject(dc,GetStockObject(NULL_PEN));Ellipse(dc,cx-6,y-4,cx+7,y+9);SelectObject(dc,old);SelectObject(dc,pen);DeleteObject(brush);}y+=22;};
  if(!walk){
   button({x,y,x+60,y+28},"Undo",2);button({x+66,y,x+126,y+28},"Redo",37);button({x+132,y,x+190,y+28},"Erase",8,erasing);y+=40;
+  section(x,y,"TOOLS",toolsExpanded,83);
+  if(toolsExpanded){
+   button({x,y,x+44,y+28},"Brush",70,tool==0);button({x+49,y,x+93,y+28},"Box",71,tool==1);button({x+98,y,x+142,y+28},"Select",72,tool==2);button({x+147,y,x+190,y+28},"Paint",73,tool==3);y+=36;
+   sprintf_s(b,"%s (N)",mirrorNames[mirrorMode]);button({x,y,x+190,y+28},b,74,mirrorMode!=0);y+=36;
+   sprintf_s(b,buildPlane>=0?"Plane %d":"Plane off",buildPlane);button({x,y,x+92,y+28},b,77,buildPlane>=0);button({x+98,y,x+142,y+28},"Up",75);button({x+147,y,x+190,y+28},"Down",76);y+=36;
+   button({x,y,x+92,y+28},clipboard.empty()?"Stamp: empty":"Stamp (Ctrl+V)",78,tool==4);button({x+98,y,x+190,y+28},"Generate (G)",79);y+=44;
+  }
   section(x,y,"ATMOSPHERE",atmosphereExpanded,26);
   if(atmosphereExpanded){
    label(x,y,"Mood",font,ink);y+=18;const char* moods[]={"Overcast","Noon","Golden hour","Blue hour","Concrete overcast"};sprintf_s(b,"%s   v",moods[mood]);button({x,y,x+190,y+28},b,4);y+=38;
@@ -107,11 +118,12 @@ void composeUi(HDC dc){
    slider("Sun height",(sunHeight-4)/86,300);slider("Sun angle",sunAngle/360,301);slider("Exposure",(exposure-.5f)/1.3f,302);slider("Fog",fog,303);slider("Clouds",clouds,309);
    button({x,y,x+59,y+28},"Night",3,night);button({x+65,y,x+125,y+28},"Rain",5,rain);button({x+131,y,x+190,y+28},"AO",6,ao);y+=36;
    button({x,y,x+190,y+28},"Wind",42,wind);y+=36;
+   button({x,y,x+92,y+28},"Day cycle (K)",80,dayCycle);button({x+98,y,x+190,y+28},"Turntable (O)",81,turntable);y+=36;
   }
   section(x,y,"WORLD",worldExpanded,27);
   if(worldExpanded){label(x,y,"Plot size",font,ink);y+=19;sprintf_s(b,"%d    v",world.n);button({x,y,x+190,y+28},b,7);y+=36;
    button({x,y,x+80,y+28},"Share",19);button({x+86,y,x+190,y+28},"Hide UI (H)",20);y+=36;
-   button({x,y,x+95,y+28},"Export OBJ",40);button({x+100,y,x+190,y+28},"Export FBX",43);y+=36;button({x,y,x+190,y+28},"Clear plot",9);y+=36;
+   button({x,y,x+95,y+28},"Export OBJ",40);button({x+100,y,x+190,y+28},"Export FBX",43);y+=36;button({x,y,x+190,y+28},"Generate a construct (G)",79);y+=36;button({x,y,x+190,y+28},"Clear plot",9);y+=36;
   }
   section(x,y,"AUDIO",audioExpanded,28);
   if(audioExpanded){char musicLabel[80];sprintf_s(musicLabel,"Music - %s",moodMusicNames[std::clamp(mood,0,3)]);slider(musicLabel,musicVolume,304);slider("Ambience",ambienceVolume,305);slider("Effects",effectsVolume,306);button({x,y,x+190,y+28},audioMuted?"Unmute (M)":"Mute (M)",29,audioMuted);y+=40;}
@@ -137,11 +149,16 @@ void composeUi(HDC dc){
   if(category==5){sprintf_s(b,"Rotate texture: %d degrees",surfaceRotation*90);button({dx+10,dy+140,dx+230,dy+175},b,55);const char* scales[]={"Pattern: large","Pattern: natural","Pattern: fine"};button({dx+240,dy+140,dx+430,dy+175},scales[surfaceScale],56);sprintf_s(b,"Building %s with %s",names[selected],surfaceNames[chosenSurface]);label(dx+443,dy+150,b,font,ink);}
  }
  }
- if(uiModal){actions.clear();int width=uiModal==2?560:620,height=uiModal==1?510:uiModal==3?560:uiModal==5?560:330,mx=(W-width)/2,my=(H-height)/2;glassPanel(dc,{mx,my,mx+width,my+height});if(menuActive)menuSlab(dc,{mx,my,mx+width,my+height});label(mx+18,my+16,uiModal==1?"Controls":uiModal==3?"Saved worlds":uiModal==5?"Named viewpoints":"Share world",fontTitle,ink);
-  if(uiModal==1){const char* keysText[]={"Place","Erase","Rotate piece","Pick / family","Switch tab","Cable","Camera","Undo","Walk mode","Parkour","Photo"};const char* eraseHelp=camScheme==1?"Hold X, or the Erase toggle (Shift is orbit)":"Shift+click, hold X, or the Erase toggle";
-   const char* help[]={"Click, or hold and drag to fill. Multi-cell pieces (Doorway, Portal, Bridge) need cleared neighbors — openings are walk-through",eraseHelp,"R; openings, screens, lights, ivy and ladders auto-face flush on a wall click","1-9 within a tab; [ / ]; hold+scroll cycles family variants; L last placed; F next family","Comma and period","Click two faces; Esc cancels",camHelpText(),"Ctrl+Z undo, Ctrl+Y redo","Tab; WASD, Shift run, Space jump, C crouch; F / click uses doors","Hold W against a wall; Space wall-jumps; W climbs ledges","H hides UI; M mute; F11 fullscreen; F12 photo; Export OBJ/FBX in World"};
-   for(int i=0;i<11;i++){int yy=my+61+i*35;label(mx+20,yy,keysText[i],fontBold,ink);if(dc){RECT tx{mx+146,yy,mx+width-18,yy+33};SelectObject(dc,font);SetTextColor(dc,muted);uiDrawText(dc,help[i],-1,&tx,DT_WORDBREAK);}}
+ if(uiModal){actions.clear();int width=uiModalWidth(),height=uiModalHeight(),mx=(W-width)/2,my=(H-height)/2;glassPanel(dc,{mx,my,mx+width,my+height});if(menuActive)menuSlab(dc,{mx,my,mx+width,my+height});label(mx+18,my+16,uiModal==1?"Controls":uiModal==3?"Saved worlds":uiModal==5?"Named viewpoints":uiModal==8?"Generate a construct":"Share world",fontTitle,ink);
+  if(uiModal==1){const char* keysText[]={"Place","Erase","Rotate piece","Pick / family","Switch tab","Tools","Mirror / plane","Cable","Camera","Undo","Walk mode","Parkour","Atmosphere","Photo"};const char* eraseHelp=camScheme==1?"Hold X, or the Erase toggle (Shift is orbit)":"Shift+click, hold X, or the Erase toggle";
+   const char* help[]={"Click, or hold and drag to fill. Multi-cell pieces (Doorway, Portal, Bridge) need cleared neighbors — openings are walk-through",eraseHelp,"R; openings, screens, lights, ivy and ladders auto-face flush on a wall click","1-9 within a tab; [ / ]; hold+scroll cycles family variants; L last placed; F next family","Comma and period","B cycles Brush / Box / Select: two clicks fill, erase or copy a volume. P paints finishes. Ctrl+V stamps the copy; R turns it; G generates a construct","N mirrors across X, Z or both. Page Up / Down raise a build plane; Home clears it","Click two faces; Esc cancels",camHelpText(),"Ctrl+Z undo, Ctrl+Y redo","Tab; WASD, Shift run, Space jump, C crouch; F / click uses doors; T torch at night","Hold W against a wall; Space wall-jumps; W climbs ledges","K runs a four-minute day; O turns the camera slowly for showcases","H hides UI; M mute; F11 fullscreen; F12 photo; Export OBJ/FBX in World"};
+   for(int i=0;i<14;i++){int yy=my+61+i*35;label(mx+20,yy,keysText[i],fontBold,ink);if(dc){RECT tx{mx+146,yy,mx+width-18,yy+33};SelectObject(dc,font);SetTextColor(dc,muted);uiDrawText(dc,help[i],-1,&tx,DT_WORDBREAK);}}
    button({mx+18,my+height-47,mx+width-18,my+height-17},"Close",22);
+  }else if(uiModal==8){
+   label(mx+18,my+51,"Replace the plot with a generated construct. Undo brings the previous world back.",font,muted);
+   for(int i=0;i<GeneratorCount;i++){int yy=my+90+i*58;RECT rr{mx+18,yy,mx+width-18,yy+50};button(rr,"",90+i);if(dc){text(dc,rr.left+14,rr.top+7,generatorNames[i],fontBold,ink);text(dc,rr.left+14,rr.top+27,generatorNotes[i],font,muted);}}
+   sprintf_s(b,"Seed %u   -   plot %d x %d",generatorSeed,std::max(world.n,12),std::max(world.n,12));label(mx+18,my+388,b,font,muted);
+   button({mx+18,my+height-47,mx+220,my+height-17},"Shuffle seed",95);button({mx+230,my+height-47,mx+width-18,my+height-17},"Close",22);
   }else if(uiModal==2){label(mx+18,my+51,"Copy this text to export. Paste a world here and press Load.",font,muted);button({mx+18,my+height-47,mx+width/2-4,my+height-17},"Load",23);button({mx+width/2+4,my+height-47,mx+width-18,my+height-17},"Close",22);}
   else if(uiModal==5){
    label(mx+18,my+51,"Name the current camera and mood, then save a viewpoint.",font,muted);
