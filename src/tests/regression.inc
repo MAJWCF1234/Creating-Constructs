@@ -463,6 +463,7 @@ void uiSelfTest(){
  uiModal=1;rebuildActions();check(has(22),"Controls dialog provides Close");
  uiModal=2;rebuildActions();check(has(22)&&has(23)&&has(86)&&has(87),"Share dialog provides Load, Save file, Open file and Close");
  uiModal=8;rebuildActions();check(has(90)&&has(90+GeneratorCount-1)&&has(95)&&has(22),"Generate dialog lists every construct generator with shuffle and close");
+ {int oldCat=category;uiModal=0;category=7;dockScrollX=0;rebuildActions();bool sliderClash=false;for(auto a:actions)if(a.action>=300&&a.action<=309&&a.rect.left<W-230)sliderClash=true;check(has(1104)&&has(1109)&&has(1111)&&!sliderClash,"Cyber dock pieces have selectable ids clear of the slider range");category=oldCat;}
  bool oldTools=toolsExpanded;uiModal=0;toolsExpanded=true;atmosphereExpanded=true;rebuildActions();
  check(has(70)&&has(71)&&has(72)&&has(73)&&has(74)&&has(75)&&has(76)&&has(77)&&has(78)&&has(79)&&has(84)&&has(85),"Tools section exposes brush, box, select, paint, mirror, build plane, stamp, generate and part files");
  check(has(80)&&has(81),"Atmosphere exposes the day cycle and turntable toggles");

@@ -140,7 +140,7 @@ void composeUi(HDC dc){
   int cw=inner/CategoryCount;for(int i=0;i<CategoryCount;i++)button({dx+10+i*cw,dy+10,dx+10+(i+1)*cw-6,dy+38},cats[i],100+i,category==i);
   int count=uiDockPieceCount(),bw=uiDockPieceStride();uiDockClampScroll();
   RECT vis{dx+10,dy+46,dx+width-10,dy+128};int saved=dc?SaveDC(dc):0;if(dc)IntersectClipRect(dc,vis.left,vis.top,vis.right,vis.bottom);
-  for(int i=0;i<count;i++){int t=category==5?i:catTypes[category][i],x0=dx+10-dockScrollX+i*bw;RECT rr{x0,dy+46,x0+bw-6,dy+126},hitRect;if(!IntersectRect(&hitRect,&rr,&vis))continue;int id=category==5?600+i:200+t;actions.push_back({hitRect,id});
+  for(int i=0;i<count;i++){int t=category==5?i:catTypes[category][i],x0=dx+10-dockScrollX+i*bw;RECT rr{x0,dy+46,x0+bw-6,dy+126},hitRect;if(!IntersectRect(&hitRect,&rr,&vis))continue;int id=category==5?600+i:1000+t;actions.push_back({hitRect,id});
    if(dc&&RectVisible(dc,&rr)){bool on=category==5?i==chosenSurface:t==selected;roundedBox(dc,rr,on?RGB(75,46,34):hoveredAction==id?RGB(68,68,71):RGB(43,43,46),on?accent:RGB(93,93,96));
     if(category==5)drawSurfaceThumbnail(dc,rr.left+23,rr.top+5,i);else drawThumbnail(dc,(rr.left+rr.right-48)/2,rr.top+4,t);
     sprintf_s(b,"%s",category==5?surfaceNames[i]:names[t]);RECT tx{rr.left+2,rr.bottom-24,rr.right-2,rr.bottom-2};SelectObject(dc,font);SetTextColor(dc,ink);SetBkMode(dc,TRANSPARENT);uiDrawText(dc,b,-1,&tx,DT_CENTER|DT_VCENTER|DT_SINGLELINE|DT_END_ELLIPSIS);
