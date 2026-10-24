@@ -26,7 +26,7 @@ $bat = @"
 call "$vs\VC\Auxiliary\Build\vcvars64.bat" >nul
 rc /nologo /fo build\audio.res build\audio.rc
 if errorlevel 1 exit /b 1
-cl /nologo /utf-8 /std:c++17 /O2 /Ot /fp:precise /GL /MT /EHsc /W3 /DUNICODE /D_UNICODE /I"$sdk\Include" src\main.cpp build\audio.res /Fo:build\main.obj /Fe:"Play\$OutputName" /link /LTCG /OPT:REF /OPT:ICF /SUBSYSTEM:WINDOWS /STACK:4194304 /DYNAMICBASE /NXCOMPAT /INCREMENTAL:NO /LIBPATH:"$sdk\Lib" vulkan-1.lib user32.lib gdi32.lib msimg32.lib winmm.lib shell32.lib xinput.lib
+cl /nologo /utf-8 /std:c++17 /O2 /Ot /fp:precise /GL /MT /EHsc /W3 /DUNICODE /D_UNICODE /I"$sdk\Include" src\main.cpp build\audio.res /Fo:build\main.obj /Fe:"Play\$OutputName" /link /LTCG /OPT:REF /OPT:ICF /SUBSYSTEM:WINDOWS /STACK:4194304 /DYNAMICBASE /NXCOMPAT /INCREMENTAL:NO /LIBPATH:"$sdk\Lib" vulkan-1.lib user32.lib gdi32.lib msimg32.lib winmm.lib shell32.lib xinput.lib comdlg32.lib
 "@
 [IO.File]::WriteAllText((Join-Path $PSScriptRoot 'build\compile.cmd'),$bat)
 & cmd.exe /c build\compile.cmd

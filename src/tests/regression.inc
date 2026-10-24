@@ -461,10 +461,10 @@ void uiSelfTest(){
  int oldCategory=category;category=5;uiModal=0;dockScrollX=0;rebuildActions();check(has(600)&&has(55)&&has(56),"Material tab exposes surface swatches, texture rotation and scale");category=oldCategory;
  uiModal=5;rebuildActions();check(has(52)&&has(53)&&has(54)&&has(22),"Viewpoints exposes save, paging and close controls");
  uiModal=1;rebuildActions();check(has(22),"Controls dialog provides Close");
- uiModal=2;rebuildActions();check(has(22)&&has(23),"Share dialog provides Load and Close");
+ uiModal=2;rebuildActions();check(has(22)&&has(23)&&has(86)&&has(87),"Share dialog provides Load, Save file, Open file and Close");
  uiModal=8;rebuildActions();check(has(90)&&has(90+GeneratorCount-1)&&has(95)&&has(22),"Generate dialog lists every construct generator with shuffle and close");
  bool oldTools=toolsExpanded;uiModal=0;toolsExpanded=true;atmosphereExpanded=true;rebuildActions();
- check(has(70)&&has(71)&&has(72)&&has(73)&&has(74)&&has(75)&&has(76)&&has(77)&&has(78)&&has(79),"Tools section exposes brush, box, select, paint, mirror, build plane, stamp and generate");
+ check(has(70)&&has(71)&&has(72)&&has(73)&&has(74)&&has(75)&&has(76)&&has(77)&&has(78)&&has(79)&&has(84)&&has(85),"Tools section exposes brush, box, select, paint, mirror, build plane, stamp, generate and part files");
  check(has(80)&&has(81),"Atmosphere exposes the day cycle and turntable toggles");
  worldExpanded=true;rebuildActions();check(has(79),"World also reaches the generator");
  bool oldWalk=walk;walk=true;rebuildActions();check(has(82)&&!has(70),"walk panel offers the torch and hides build tools");walk=oldWalk;toolsExpanded=oldTools;
@@ -609,6 +609,8 @@ void toolsSelfTest(){
  stampRot=0;hitAdd={6,0,6};edit();check(get(6,0,6).t==0&&surfaceAt(idx(6,0,6))==5&&get(7,0,6).t==4&&get(7,0,6).r==1&&get(6,1,6).t==96&&world.doors.count(idx(6,1,6))&&footprintsValid(),"stamp reproduces pieces, finish and door state at the new corner");
  stampRot=1;hitAdd={10,0,10};edit();check(get(10,0,11).t==0&&get(10,0,10).t==4&&get(10,0,10).r==2&&get(10,1,11).t==96&&footprintsValid(),"rotated stamp turns offsets and facings together");
  stampRot=0;hitAdd={14,0,14};edit();check(get(14,0,14).t==0&&get(15,0,14).t==4,"stamp near the plot edge places what fits");
+ {std::string pj=partJson();std::vector<ClipCell> before=clipboard;clipboard.clear();World asWorld;check(parseWorldJson(pj.c_str(),asWorld)&&asWorld.n>=4&&asWorld.c[idx(0,1,0)].t==96&&asWorld.doors.count(idx(0,1,0))&&asWorld.surfaces[idx(0,0,0)]==5,"part files are valid Share worlds carrying finishes and door targets");
+  check(importPart(pj.c_str())&&clipboard.size()==before.size()&&clipW==2&&clipH==3&&clipD==1&&clipboard[0].m==before[0].m,"part files round-trip the clipboard");check(!importPart("{\"N\":8,\"c\":[]}"),"empty part files are rejected");}
  setTool(0);keys[VK_CONTROL]=true;keyDown('V',false);keys[VK_CONTROL]=keys['V']=false;check(tool==4&&uiModal==0,"Ctrl+V re-enters stamp mode without opening viewpoints");keyDown(VK_ESCAPE,false);keys[VK_ESCAPE]=false;check(tool==0&&!menuActive,"Escape leaves stamp mode before reaching the pause menu");
  tool=3;chosenSurface=3;surfaceRotation=0;surfaceScale=1;hit=hasRem=true;hasAdd=false;hitRem={6,0,6};edit();check(surfaceAt(idx(6,0,6))==(3+128),"paint applies the chosen finish to an existing piece");
  chosenSurface=0;edit();check(surfaceAt(idx(6,0,6))==0,"painting Original material clears the finish");

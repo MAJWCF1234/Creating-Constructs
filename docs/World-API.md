@@ -1,6 +1,6 @@
 # Creating Constructs — World Generation API
 
-**Core world contract (native + HTML):** plots support **64×64** with Share JSON `stride:64`; autosave writes **MON4** (`0x344F4E4D`); named snapshots write **MNS4** (`0x34534E4D`). MNS4 keeps the MNS3 64×64×20 cell layout and appends `uint32_t pipeCount` plus packed 9-byte `PipeNode` records after the cables. MNS1 / MNS2 / MNS3 remain readable. Native Share JSON round-trips `pipes` (including `rot` and `auto`). **`PieceCount = 104`** (IDs `0…103`).
+**Core world contract (native + HTML):** plots support **64×64** with Share JSON `stride:64`; autosave writes **MON4** (`0x344F4E4D`); named snapshots write **MNS4** (`0x34534E4D`). MNS4 keeps the MNS3 64×64×20 cell layout and appends `uint32_t pipeCount` plus packed 9-byte `PipeNode` records after the cables. MNS1 / MNS2 / MNS3 remain readable. Native Share JSON round-trips `pipes` (including `rot` and `auto`). **`PieceCount = 124`** (IDs `0…123`).
 
 **Updated: October 24, 2026.** Native extensions include material recipes, named viewpoints, animated service-door targets, the main / pause menu, and the build tools / construct generators in section 16.4. The shared piece catalog does not imply feature parity between native and HTML.
 
@@ -116,7 +116,7 @@ Native `loadWorldJson` still accepts this when `stride` is omitted. Prefer emitt
 Rules:
 
 - Omit empty cells entirely.
-- `t` must be `0 … PieceCount-1` (currently **0…103**).
+- `t` must be `0 … PieceCount-1` (currently **0…123**).
 - `r` must be `0…3`.
 - Duplicate keys: last write wins (avoid duplicates).
 - Native `m` defaults to `0` (original material); `d` defaults to `0` (closed). See sections 14–15 for validation and encoding.
@@ -174,7 +174,7 @@ def to_share(N: int, cells: dict, cables=(), pipes=(), stride: int = STRIDE) -> 
 
 ## 4. Piece catalog (`t`)
 
-Canonical names live in `src/generated/catalog.inc` / HTML `TN` (keep them in sync via `tools/sync_catalog.py`). Current **`PieceCount = 104`**. GPU cell encoding uses **`PieceEncodingStride = 128`** (`1 + t + stride * r`).
+Canonical names live in `src/generated/catalog.inc` / HTML `TN` (keep them in sync via `tools/sync_catalog.py`). Current **`PieceCount = 124`**. GPU cell encoding uses **`PieceEncodingStride = 128`** (`1 + t + stride * r`).
 
 | ID | Name | Notes |
 |----|------|--------|
@@ -274,6 +274,34 @@ Canonical names live in `src/generated/catalog.inc` / HTML `TN` (keep them in sy
 | 93 | Downslope | Opposite slope (high at +Z) |
 | 94 | Quadpier | Four slender pillars in **one** cell |
 | 95 | Angle | Wall-flush cube lamp with downward aperture |
+| 96 | Service entry | Interactive hinged 2 m door — **1×2** tall; `d` stores the open target |
+| 97 | Air vent | Wall louvre grille (wall-flush) |
+| 98 | Cable tray | Ladder tray along X, merges across cells |
+| 99 | Ceiling light | Recessed fluorescent panel (fixture) |
+| 100 | Exit sign | Green pictogram housing (wall-flush fixture) |
+| 101 | Neon cyan | Twin cyan tubes on a dark backing (wall-flush fixture) |
+| 102 | Neon rose | Twin rose tubes (wall-flush fixture) |
+| 103 | Terminal | Industrial terminal with lit screen (wall-flush) |
+| 104 | Neon violet | Twin violet tubes (wall-flush fixture) — *Cyber* |
+| 105 | Holo sign | Hanging cyan sign panel on a bracket (wall-flush fixture) |
+| 106 | Server rack | Dark cabinet with LED rows; solid |
+| 107 | Vending | Vending machine with lit header; solid |
+| 108 | Grate floor | Steel grate plate at cell floor |
+| 109 | Barrier | Jersey barrier along X with hazard bands |
+| 110 | Duct | Square duct along X at cell top |
+| 111 | Fan vent | Wall fan in a steel frame (wall-flush) |
+| 112 | Antenna | Mast with dishes and tip light; thin collider |
+| 113 | Light strip | Floor-level cyan strip on a wall base (wall-flush fixture) |
+| 114 | Grid floor | Dark floor plate with glowing grid lines |
+| 115 | Carpet | Carpet material cube — *Liminal* |
+| 116 | Yellow wall | Pale painted cube with dado stripe |
+| 117 | Ceiling tile | Drop-ceiling tile with T-bar edges at cell top |
+| 118 | Tube light | Bare twin fluorescent tubes (fixture) |
+| 119 | Pool tile | Glossy pale-blue tile cube |
+| 120 | Door blank | Non-interactive painted door in a frame (wall-flush) |
+| 121 | Partition | Office partition panel along X, 0.6 high |
+| 122 | Water cooler | Cooler with glass jug; slim collider |
+| 123 | Painted pillar | Square painted pillar |
 
 **Do not** put types `16` or `43–46` in `c` for generators. Cables and pipes have their own arrays.
 
@@ -294,7 +322,7 @@ Native and HTML `footprintW` / `footprintD` / `footprintH` must match.
 
 ### Categories (palette only)
 
-Structure / Shapes / Openings / Detail / Nature / Material / Pipes — see `catTypes` in `catalog.inc`. Every piece ID must appear in some category for native self-tests; generators need not care about categories.
+Structure / Shapes / Openings / Detail / Nature / Material / Pipes / Cyber / Liminal — see `catTypes` in `catalog.inc`. Every piece ID must appear in some category for native self-tests; generators need not care about categories.
 
 ---
 
@@ -675,7 +703,7 @@ print("pieces", len(cells))
 | Plot `N` | 4…64 |
 | Height | 20 |
 | Dense cells | 81920 (64×64×20) |
-| Piece type | 0…103 (`PieceCount-1`) |
+| Piece type | 0…123 (`PieceCount-1`) |
 | Rotation | 0…3 |
 | Cables | ≤ 2048 |
 | Pipes | ≤ 8000 |
@@ -920,6 +948,14 @@ construct and record one undo step. Plots smaller than 12 widen to 12 tiles.
 | Terraced hillside | Stepped aggregate terraces, random stairs between steps, grass / moss / shrubs / pines / boulders / logs, a still basin at the foot |
 | Ruined colonnade | Broken columns and beams, half walls with ivy, moss, grass, boulders, logs, mushrooms, perimeter trees |
 | Megastructure deck | Pilotis under a waffle deck, 2×2 lightwells, cores with bridges and floor plates, deck railings and lights, moss / grass / puddles below |
+
+**Part files.** With a region copied (Select tool, or Import part), *Export part* writes
+`Exports\<id>.part.json`: ordinary Share JSON whose keys are offsets from the region's
+minimum corner, with `m` finishes and `d` door targets, plus an informational
+`"part":{"w","h","d"}` object that loaders ignore. *Import part* opens any `.json` /
+`.txt` Share world or part file into the clipboard and enters Stamp mode, so parts travel
+between players and also load as small worlds in the HTML sandbox. The Share dialog's
+*Save file* / *Open file* write and read whole worlds as `Exports\<id>.world.json`.
 
 The same seed and plot size always produce the same construct; *Shuffle seed* draws a
 new one. `--smoke-test` validates every generator at 12 and 24 tiles, mirror

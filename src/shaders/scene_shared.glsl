@@ -91,5 +91,5 @@ vec3 applyBiome(vec3 tex,vec3 biome){
 }
 
 
-vec3 fixtureColor(float power){int kind=int(power/100.);return kind==2?vec3(.15,.85,1.):kind==3?vec3(1.,.14,.55):kind==4?vec3(.30,1.,.42):kind==5?vec3(.35,.8,.85):vec3(1.,.851,.627);}
+vec3 fixtureColor(float power){int kind=int(power/100.);return kind==2?vec3(.15,.85,1.):kind==3?vec3(1.,.14,.55):kind==4?vec3(.30,1.,.42):kind==5?vec3(.35,.8,.85):kind==6?vec3(.7,.3,1.):vec3(1.,.851,.627);}
 float fixturePower(float power){return mod(power,100.);}

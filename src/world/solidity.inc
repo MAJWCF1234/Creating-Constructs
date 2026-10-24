@@ -53,4 +53,19 @@ case 98:return f.y>.75f&&f.y<.85f&&PART_ABS(f.z-.5f)<.25f;
 case 99:return f.y>.80f;
 case 100:case 101:case 102:return false;
 case 103:return f.z<.26f&&PART_ABS(f.x-.5f)<.36f&&f.y>.15f&&f.y<.90f;
+case 104:case 105:case 113:case 118:return false; // neon, holo sign, light strip, tube light
+case 106:return PART_ABS(f.x-.5f)<.4f&&f.z>.12f&&f.z<.95f; // server rack
+case 107:return PART_ABS(f.x-.5f)<.4f&&f.z>.3f&&f.z<.92f; // vending machine
+case 108:return f.y<.08f; // grate floor
+case 109:return f.y<.55f&&PART_ABS(f.z-.5f)<.3f; // jersey barrier
+case 110:return f.y>.5f&&PART_ABS(f.z-.5f)<.25f; // duct
+case 111:return f.z<.12f; // wall fan
+case 112:return PART_ABS(f.x-.5f)<.05f&&PART_ABS(f.z-.5f)<.05f; // antenna mast
+case 114:return f.y<.1f; // grid floor
+case 115:case 116:case 119:return true; // carpet, yellow wall, pool tile
+case 117:return f.y>.88f; // ceiling tile
+case 120:return f.z<.1f; // door blank
+case 121:return f.y<.63f&&PART_ABS(f.z-.5f)<.06f; // partition
+case 122:return PART_ABS(f.x-.5f)<.16f&&PART_ABS(f.z-.5f)<.16f&&f.y<.95f; // water cooler
+case 123:return PART_ABS(f.x-.5f)<.15f&&PART_ABS(f.z-.5f)<.15f; // painted pillar
 default:return true;}

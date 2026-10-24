@@ -43,7 +43,7 @@ int uiDockPieceStride(){return 96;}
 int uiDockMaxScroll(){int inner=uiDockWidth()-20;return std::max(0,uiDockPieceCount()*uiDockPieceStride()-inner);}
 void uiDockClampScroll(){dockScrollX=std::clamp(dockScrollX,0,uiDockMaxScroll());}
 // Collapsed base must clear Walk + Undo row + 5 section headers + bottom pad (SETTINGS was clipping at 216).
-int uiSideHeight(){return walk?64:294+(audioExpanded?169:0)+(atmosphereExpanded?384:0)+(worldExpanded?199:0)+(settingsExpanded?300:0)+(toolsExpanded?152:0);}
+int uiSideHeight(){return walk?64:294+(audioExpanded?169:0)+(atmosphereExpanded?384:0)+(worldExpanded?199:0)+(settingsExpanded?300:0)+(toolsExpanded?188:0);}
 void roundedBox(HDC dc,RECT r,COLORREF bg,COLORREF border,int radius=8){if(!RectVisible(dc,&r))return;HBRUSH b=CreateSolidBrush(bg);HPEN p=CreatePen(PS_SOLID,1,border);auto ob=SelectObject(dc,b),op=SelectObject(dc,p);RoundRect(dc,r.left,r.top,r.right,r.bottom,radius,radius);SelectObject(dc,ob);SelectObject(dc,op);DeleteObject(b);DeleteObject(p);}
 void glassPanel(HDC dc,RECT r){
  if(!dc||!RectVisible(dc,&r))return;int width=r.right-r.left,height=r.bottom-r.top;
@@ -109,7 +109,8 @@ void composeUi(HDC dc){
    button({x,y,x+44,y+28},"Brush",70,tool==0);button({x+49,y,x+93,y+28},"Box",71,tool==1);button({x+98,y,x+142,y+28},"Select",72,tool==2);button({x+147,y,x+190,y+28},"Paint",73,tool==3);y+=36;
    sprintf_s(b,"%s (N)",mirrorNames[mirrorMode]);button({x,y,x+190,y+28},b,74,mirrorMode!=0);y+=36;
    sprintf_s(b,buildPlane>=0?"Plane %d":"Plane off",buildPlane);button({x,y,x+92,y+28},b,77,buildPlane>=0);button({x+98,y,x+142,y+28},"Up",75);button({x+147,y,x+190,y+28},"Down",76);y+=36;
-   button({x,y,x+92,y+28},clipboard.empty()?"Stamp: empty":"Stamp (Ctrl+V)",78,tool==4);button({x+98,y,x+190,y+28},"Generate (G)",79);y+=44;
+   button({x,y,x+92,y+28},clipboard.empty()?"Stamp: empty":"Stamp (Ctrl+V)",78,tool==4);button({x+98,y,x+190,y+28},"Generate (G)",79);y+=36;
+   button({x,y,x+92,y+28},"Export part",84);button({x+98,y,x+190,y+28},"Import part",85);y+=44;
   }
   section(x,y,"ATMOSPHERE",atmosphereExpanded,26);
   if(atmosphereExpanded){
@@ -159,7 +160,7 @@ void composeUi(HDC dc){
    for(int i=0;i<GeneratorCount;i++){int yy=my+90+i*58;RECT rr{mx+18,yy,mx+width-18,yy+50};button(rr,"",90+i);if(dc){text(dc,rr.left+14,rr.top+7,generatorNames[i],fontBold,ink);text(dc,rr.left+14,rr.top+27,generatorNotes[i],font,muted);}}
    sprintf_s(b,"Seed %u   -   plot %d x %d",generatorSeed,std::max(world.n,12),std::max(world.n,12));label(mx+18,my+388,b,font,muted);
    button({mx+18,my+height-47,mx+220,my+height-17},"Shuffle seed",95);button({mx+230,my+height-47,mx+width-18,my+height-17},"Close",22);
-  }else if(uiModal==2){label(mx+18,my+51,"Copy this text to export. Paste a world here and press Load.",font,muted);button({mx+18,my+height-47,mx+width/2-4,my+height-17},"Load",23);button({mx+width/2+4,my+height-47,mx+width-18,my+height-17},"Close",22);}
+  }else if(uiModal==2){label(mx+18,my+51,"Copy this text to export, or save it as a file. Paste or open a world, then Load.",font,muted);int bw=(width-36-18)/4;for(int i=0;i<4;i++){const char* labels[]={"Load","Save file","Open file","Close"};const int ids[]={23,86,87,22};button({mx+18+i*(bw+6),my+height-47,mx+18+i*(bw+6)+bw,my+height-17},labels[i],ids[i]);}}
   else if(uiModal==5){
    label(mx+18,my+51,"Name the current camera and mood, then save a viewpoint.",font,muted);
    for(int row=0;row<8;row++){int index=viewpointPage*8+row;if(index>=(int)world.viewpoints.size())break;auto title=world.viewpoints[index].name;int yy=my+120+row*36;RECT rr{mx+18,yy,mx+width-18,yy+30};button(rr,"",700+index);if(dc){SelectObject(dc,font);SetTextColor(dc,ink);DrawTextW(dc,title,-1,&rr,DT_CENTER|DT_VCENTER|DT_SINGLELINE|DT_END_ELLIPSIS);}}

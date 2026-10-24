@@ -8,7 +8,7 @@
 
 `prepare_audio.py` prepares the soundtrack/ambience bank. `remaster_movement.py` packs the approved mastered movement WAVs under `assets/audio/movement`, preserving the first 17 clips byte for byte. `--verify` checks the existing 41-clip bank without changing it.
 
-World generators: `tinyworld_to_mns.py`, `write_concept_save.py`, `make_reference_atrium.py`, `make_overgrown_construct.py`. Format contract: `docs/World-API.md` (MON4 / MNS4 / Share `stride:64` / pieces `0…103`).
+World generators: `tinyworld_to_mns.py`, `write_concept_save.py`, `make_reference_atrium.py`, `make_overgrown_construct.py`. Format contract: `docs/World-API.md` (MON4 / MNS4 / Share `stride:64` / pieces `0…123`).
 
 Retired one-shot scripts (HTML patch/probe fragments, itch cover/background generators, GDI probe) are recoverable from `output/maintenance/retired-one-off-tools.zip`; its adjacent JSON records SHA-256 hashes. They are historical tools, not build dependencies.
 

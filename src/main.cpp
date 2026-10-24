@@ -128,7 +128,7 @@ struct Vertex{V p,n;float m,a;float u=0,v=0;};std::vector<Vertex> vertices,trans
 V transform(V p){p=doorHingePoint(p);for(int i=0;i<turn;i++)p={p.z,p.y,-p.x};return p+origin;}
 // Local emitter centers match the visible fixture geometry, including rotation.
 V lampEmitter(int type){
- V local=type==99?V{0,.345f,0}:type>=100?V{0,.18f,-.34f}:(type==13||type==79||type==80)?V{0,.4f,0}:type==26?V{0,.17f,0}:type==27?V{0,0,-.4f}:type==95?V{0,-.06f,-.36f}:V{0,-.08f,0};
+ V local=type==99?V{0,.345f,0}:type==104?V{0,.1f,-.34f}:type==105?V{0,0,-.4f}:type==113?V{0,-.4f,-.44f}:type==118?V{0,.38f,0}:type>=100?V{0,.18f,-.34f}:(type==13||type==79||type==80)?V{0,.4f,0}:type==26?V{0,.17f,0}:type==27?V{0,0,-.4f}:type==95?V{0,-.06f,-.36f}:V{0,-.08f,0};
  return transform(local);
 }
 // Same-facing neighbor in piece-local X/Y (used so cobogó carved edges merge when tiled).
@@ -377,7 +377,7 @@ if(c.t==5){ // moss from surface nets; wet beds when water sits on/against it
 if(c.t==63||c.t==64)continue; // stone/boulder from rock nets
 if(c.t==17||c.t==24)continue; // merged planter / pool basins
 if(c.t==96){int index=idx(x,y,z);doorRoots.push_back(index);auto motion=doorMotions.find(index);if(motion==doorMotions.end()||motion->second.rotation!=c.r)doorMotions[index]={world.doors.count(index)?1.f:0.f,c.r};gpu.cells[index]|=doorGpuBits(index);}
-piece(c.t);if((c.t==13||c.t==26||c.t==27||c.t==37||c.t==79||c.t==80||c.t==95||(c.t>=99&&c.t<=103))&&lamp<16){V emitter=lampEmitter(c.t);lampKinds[lamp]=c.t;gpu.lamps[lamp++]={emitter.x,emitter.y,emitter.z,c.t==95?2.f:1.f};}
+piece(c.t);if((c.t==13||c.t==26||c.t==27||c.t==37||c.t==79||c.t==80||c.t==95||(c.t>=99&&c.t<=103)||c.t==104||c.t==105||c.t==113||c.t==118)&&lamp<16){V emitter=lampEmitter(c.t);lampKinds[lamp]=c.t;gpu.lamps[lamp++]={emitter.x,emitter.y,emitter.z,c.t==95?2.f:1.f};}
 if(c.t==40&&get(x,y-1,z).t==5)natureWaterUnderstory(-.38f); // water on moss — aquatic fringe
 }
 // Mirror each reserved multi-cell footprint without changing the authored world.
@@ -450,7 +450,7 @@ V anchor(){if(hasRem&&hasAdd)return (hitAdd+hitRem)*.5f+V{.5,.5,.5};if(hasRem)re
 bool wallFlushPiece(int t){
  // Face-mounted openings, screens, and wall vegetation — open/−Z side sits against the hit wall.
  return t==3||t==8||t==9||t==15||t==21||t==22||t==25||t==27||t==32||t==33||t==52
-  ||t==97||t==100||t==101||t==102||t==103||t==77||t==70||t==71||t==72||t==73||t==74||t==82||t==83||t==84||t==85||t==87||t==95;
+  ||t==97||t==100||t==101||t==102||t==103||t==104||t==105||t==111||t==113||t==120||t==77||t==70||t==71||t==72||t==73||t==74||t==82||t==83||t==84||t==85||t==87||t==95;
 }
 void autoFacing(int& t,int& r){
  if(!hasRem||!hasAdd)return;V d=hitRem-hitAdd;if(!(d.x||d.z))return; // vertical faces only
@@ -517,7 +517,7 @@ top=top*(1.f-clouds*.45f)+V{.55f,.58f,.62f}*clouds*.45f; // soft overcast sheet
 gpu.sky={hor.x,hor.y,hor.z,night?1.f:0.f};
 gpu.atmos={top.x,top.y,top.z,night?.1f:(rain?moodSat*.4f:moodSat)}; // PQ.uniforms.sat
 gpu.cfg={exposure, (rain?.012f:0.f)+fog*fog*.09f+.003f+clouds*.045f, ao?1.f:0.f, (float)world.n}; // FogExp2 density
-for(int i=0;i<16;i++){float kind=gpu.lamps[i].w;bool on=(gpu.lamps[i].x||gpu.lamps[i].y||gpu.lamps[i].z)&&night;int type=lampKinds[i];gpu.lamps[i].w=on?(type==95?104.5f:type==101?204.5f:type==102?304.5f:type==100?404.5f:type==103?504.5f:4.5f):0.f;} // w>=100 = downward angle cone
+for(int i=0;i<16;i++){float kind=gpu.lamps[i].w;bool on=(gpu.lamps[i].x||gpu.lamps[i].y||gpu.lamps[i].z)&&night;int type=lampKinds[i];gpu.lamps[i].w=on?(type==95?104.5f:type==101?204.5f:type==102?304.5f:type==100?404.5f:type==103?504.5f:type==104?604.5f:(type==105||type==113)?204.5f:4.5f):0.f;} // w>=100 = downward angle cone
 applyTorch();
 // lighting.y: 1=rain ripples, .55=wind-only foliage sway; lighting.w=cloud density
 gpu.lighting={night?.28f:hi*1.25f,rain?1.f:(wind?.55f:0.f),cameraWaterDepth(eye),clouds};

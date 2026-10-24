@@ -33,6 +33,12 @@ void main(){
  if(material==49){albedo=vec3(1.,.08,.36);emit=.5+s.sky.w*2.5;rough=.8;}
  if(material==50){albedo=vec3(.025,.18,.20);emit=.35+s.sky.w*.6;rough=.88;}
  if(material==51){albedo=vec3(.03,.38,.07);emit=.5+s.sky.w*1.4;rough=.9;}
+ if(material==53){albedo=vec3(.62,.2,1.);emit=.5+s.sky.w*2.5;rough=.8;}   // violet neon
+ if(material==54){albedo=vec3(.52,.40,.26);rough=1.;}                        // carpet
+ if(material==55){albedo=vec3(.86,.80,.55);rough=.9;}                        // pale yellow paint
+ if(material==56){albedo=vec3(.88,.88,.84);rough=.95;}                       // ceiling tile / appliance white
+ if(material==57){albedo=vec3(.64,.82,.86);rough=.25;metal=.05;}             // pool tile
+ if(material==58){albedo=vec3(.12,.12,.15);rough=.5;metal=.45;}              // dark cabinet
  if(material==5){albedo=sampleMap(4,uv);bumpLayer=4;bumpScale=.12;rough=.88;}            // timber
  if(material==6){ // Optimum vine — UV in normal.xy (tiled), foliage biome tint
   vec2 vu=fract(n.xy);
