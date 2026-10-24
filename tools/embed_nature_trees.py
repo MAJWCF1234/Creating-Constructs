@@ -1,14 +1,14 @@
 """Pack C++ nature meshes + textures into Creating Constructs.html (single-file offline).
 
-Regenerate after changing src/nature_models.inc or nature_textures.inc.
+Regenerate after changing src/generated/nature_models.inc or nature_textures.inc.
 """
 from __future__ import annotations
 import re, struct, base64
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-MODELS = (ROOT / "src" / "nature_models.inc").read_text(encoding="utf-8", errors="ignore")
-TEX = (ROOT / "src" / "nature_textures.inc").read_text(encoding="utf-8", errors="ignore")
+MODELS = (ROOT / "src" / "generated/nature_models.inc").read_text(encoding="utf-8", errors="ignore")
+TEX = (ROOT / "src" / "generated/nature_textures.inc").read_text(encoding="utf-8", errors="ignore")
 HTML = ROOT / "Creating Constructs.html"
 THREE = ROOT / "three.min.js"
 
@@ -71,7 +71,7 @@ def pack_mesh(verts: list[list[float]]) -> str:
 
 
 def js_blob(meshes: dict[str, str], textures: list[str], bark_layers: list[int]) -> str:
-    lines = [MARKER_START, "// Embedded from src/nature_models.inc + nature_textures.inc"]
+    lines = [MARKER_START, "// Embedded from src/generated/nature_models.inc + nature_textures.inc"]
     lines.append("const NATURE_MESH_PACK={")
     for i, name in enumerate(MESH_NAMES):
         comma = "," if i + 1 < len(MESH_NAMES) else ""

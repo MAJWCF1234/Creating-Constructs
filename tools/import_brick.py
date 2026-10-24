@@ -3,7 +3,7 @@
 Sources are 32×32 palette PNGs (and an arch folder). Upsamples with Lanczos
 to 128×128 (smooth — NEAREST made bump maps read as voxels). Writes:
   assets/brick/*.png
-  src/brick_textures.inc
+  src/generated/brick_textures.inc
   patches Creating Constructs.html brick map (BT) + brickM top/side
 """
 from __future__ import annotations
@@ -17,7 +17,7 @@ from PIL import Image, ImageFilter, ImageOps
 ROOT = Path(__file__).resolve().parents[1]
 CLAY = Path(r"O:\Assets\Textures\1_basic_refined\1_stone\1_clay")
 TUDOR = Path(r"O:\Assets\Textures\2_advanced_refined\4_tudor")
-OUT_INC = ROOT / "src" / "brick_textures.inc"
+OUT_INC = ROOT / "src" / "generated/brick_textures.inc"
 OUT_DIR = ROOT / "assets" / "brick"
 HTML = ROOT / "Creating Constructs.html"
 

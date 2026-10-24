@@ -35,5 +35,5 @@ else:
  (A/'soundbank.bin').write_bytes(bank)
  manifest=json.loads((A/'manifest.json').read_text())[:17]+metadata
  (A/'manifest.json').write_text(json.dumps(manifest,indent=2))
- (R/'src/audio_assets.h').write_text('enum AudioClipId { '+', '.join('A_'+x['id'] for x in manifest)+', A_Count };\n')
+ (R/'src/generated/audio_assets.h').write_text('enum AudioClipId { '+', '.join('A_'+x['id'] for x in manifest)+', A_Count };\n')
  print('Packed 24 approved movement cues; first 17 clips preserved byte for byte')

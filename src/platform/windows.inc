@@ -5,8 +5,7 @@ std::wstring uiWideText(const char* s,int count=-1){if(!s)return {};int n=MultiB
 int uiDrawText(HDC dc,const char* s,int count,LPRECT rect,UINT flags){auto w=uiWideText(s,count);return DrawTextW(dc,w.c_str(),(int)w.size(),rect,flags);}
 void text(HDC dc,int x,int y,const char* s,HFONT ft,COLORREF c){SelectObject(dc,ft);SetTextColor(dc,c);SetBkMode(dc,TRANSPARENT);auto w=uiWideText(s);TextOutW(dc,x,y,w.c_str(),(int)w.size());}
 void uiButton(HDC dc,int x,int y,int w,int h,const char* label,int action,bool on=false){RECT r{x,y,x+w,y+h};fill(dc,r,on?accent:paper);HBRUSH br=CreateSolidBrush(on?ink:line);FrameRect(dc,&r,br);InflateRect(&r,-1,-1);FrameRect(dc,&r,br);DeleteObject(br);InflateRect(&r,1,1);SelectObject(dc,font);SetTextColor(dc,on?RGB(255,255,255):ink);SetBkMode(dc,TRANSPARENT);uiDrawText(dc,label,-1,&r,DT_CENTER|DT_VCENTER|DT_SINGLELINE);actions.push_back({r,action});}
-#include "save_browser.inc"
-#include "glass_panels.inc"
+#include "ui.inc"
 void invalidate(){rebuildActions();if(topPanel)InvalidateRect(topPanel,nullptr,FALSE);if(sidePanel)InvalidateRect(sidePanel,nullptr,FALSE);if(dockPanel)InvalidateRect(dockPanel,nullptr,FALSE);if(modalPanel)InvalidateRect(modalPanel,nullptr,FALSE);if((uiModal==3||uiModal==5)&&saveNameEdit)SetFocus(saveNameEdit);else if(uiModal==2&&shareEdit)SetFocus(shareEdit);else if(viewWindow)SetFocus(viewWindow);}
 int typeCount(){int n=0;while(n<CategorySlots&&catTypes[category][n]>=0)n++;return n;}
 void selectType(int t){if(selected!=t)audioEvent(A_click);selected=t;for(int i=0;i<typeCount();i++)if(catTypes[category][i]==t){invalidate();return;}for(int c=0;c<CategoryCount;c++)for(int i=0;i<CategorySlots&&catTypes[c][i]>=0;i++)if(catTypes[c][i]==t){category=c;invalidate();return;}}
@@ -132,7 +131,35 @@ case 24:showUiModal(1);break;case 26:atmosphereExpanded=!atmosphereExpanded;layo
 case 35:settingsExpanded=!settingsExpanded;if(settingsExpanded){audioExpanded=false;}layout();break;
 case 36:camScheme=camScheme==1?0:1;inputSaveSettings();layout();break;
 case 38:toggleFullscreen();break;case 39:openPhotosFolder();break;case 40:exportMeshObj();break;case 43:exportMeshFbx();break;}invalidate();}
-#include "gamepad.inc"
+// Basic XInput support — optional; ignored when no pad is connected.
+struct GamepadState{bool connected=false;XINPUT_STATE cur{},prev{};float lx=0,ly=0,rx=0,ry=0;bool a=false,b=false,x=false,y=false,start=false,lb=false,rb=false;
+ bool pressed(WORD mask)const{return (cur.Gamepad.wButtons&mask)&&!(prev.Gamepad.wButtons&mask);}
+} pad;
+float padAxis(SHORT v,SHORT dead=7849){if(v>-dead&&v<dead)return 0;float n=v/32767.f;return n;}
+void pollGamepad(float dt){
+ pad.prev=pad.cur;pad.connected=XInputGetState(0,&pad.cur)==ERROR_SUCCESS;if(!pad.connected)return;
+ pad.lx=padAxis(pad.cur.Gamepad.sThumbLX);pad.ly=padAxis(pad.cur.Gamepad.sThumbLY);
+ pad.rx=padAxis(pad.cur.Gamepad.sThumbRX);pad.ry=padAxis(pad.cur.Gamepad.sThumbRY);
+ if(pad.pressed(XINPUT_GAMEPAD_START)){if(menuActive)action(60);else action(65);return;}
+ if(menuActive){if(pad.pressed(XINPUT_GAMEPAD_B))action(22);if(uiModal==6){if(pad.pressed(XINPUT_GAMEPAD_DPAD_UP))menuSelection=(menuSelection+4)%5;if(pad.pressed(XINPUT_GAMEPAD_DPAD_DOWN))menuSelection=(menuSelection+1)%5;if(pad.pressed(XINPUT_GAMEPAD_A))action(60+menuSelection);invalidate();}return;}
+ if(uiModal)return;
+ if(pad.pressed(XINPUT_GAMEPAD_X)){if(walk)interactDoor();else undo();}
+ if(pad.pressed(XINPUT_GAMEPAD_Y))redo();
+ if(pad.pressed(XINPUT_GAMEPAD_B)){erasing=!erasing;invalidate();}
+ if(pad.pressed(XINPUT_GAMEPAD_LEFT_SHOULDER)){selectType((selected+PieceCount-1)%PieceCount);}
+ if(pad.pressed(XINPUT_GAMEPAD_RIGHT_SHOULDER)){selectType((selected+1)%PieceCount);}
+ if(walk){
+  yaw-=pad.rx*1.6f*dt*mouseSens;pitch=std::clamp(pitch+pad.ry*1.2f*dt*mouseSens,-1.5f,1.5f);
+  keys['W']=pad.ly>.35f;keys['S']=pad.ly<-.35f;keys['A']=pad.lx<-.35f;keys['D']=pad.lx>.35f;
+  keys[VK_SHIFT]=pad.cur.Gamepad.bLeftTrigger>140;keys[' ']=pad.cur.Gamepad.bRightTrigger>140;
+ }else{
+  theta-=pad.rx*1.4f*dt*mouseSens;phi=std::clamp(phi-pad.ry*1.1f*dt*mouseSens,.15f,1.5f);
+  V side{cosf(theta),0,-sinf(theta)};target=target+V{-sinf(theta),0,-cosf(theta)}*(pad.ly*6.f*dt)+side*(pad.lx*6.f*dt);
+  target.y=std::max(0.f,target.y+(pad.cur.Gamepad.bRightTrigger-pad.cur.Gamepad.bLeftTrigger)/255.f*4.f*dt);
+  if(pad.pressed(XINPUT_GAMEPAD_A)){pick();remember();std::fill(std::begin(placed),std::end(placed),false);edit();invalidate();}
+ }
+}
+
 void keyDown(int k,bool repeat){if(benchmarkRun)return;keys[k]=true;if(repeat)return;
 if(k==VK_ESCAPE){if(uiModal&&uiModal!=6){action(22);return;}if(menuActive){action(60);return;}showUiModal(6);return;}
 if(menuActive){if(k==VK_F11)toggleFullscreen();else if(uiModal==6){if(k==VK_UP||k==VK_DOWN){menuSelection=(menuSelection+(k==VK_UP?4:1))%5;invalidate();}if(k==VK_RETURN)action(60+menuSelection);}return;}
@@ -172,68 +199,7 @@ void destroyPostPass(){if(postPipeline)vkDestroyPipeline(device,postPipeline,nul
 void cleanup(){vkDeviceWaitIdle(device);destroyUiBackground();if(perfQueries)vkDestroyQueryPool(device,perfQueries,nullptr);for(auto bitmap:pieceThumbs)if(bitmap)DeleteObject(bitmap);destroySwap();destroyPostPass();vkDestroyFence(device,fence,nullptr);vkDestroySemaphore(device,acquired,nullptr);vkDestroySemaphore(device,rendered,nullptr);vkDestroyCommandPool(device,commandPool,nullptr);vkDestroyDescriptorPool(device,descriptorPool,nullptr);vkUnmapMemory(device,foliageMemory);vkDestroyBuffer(device,foliageBuffer,nullptr);vkFreeMemory(device,foliageMemory,nullptr);vkUnmapMemory(device,vertexMemory);vkUnmapMemory(device,stateMemory);vkDestroyBuffer(device,vertexBuffer,nullptr);vkDestroyBuffer(device,stateBuffer,nullptr);vkFreeMemory(device,vertexMemory,nullptr);vkFreeMemory(device,stateMemory,nullptr);if(texSampler)vkDestroySampler(device,texSampler,nullptr);if(texView)vkDestroyImageView(device,texView,nullptr);if(texImage)vkDestroyImage(device,texImage,nullptr);if(texMemory)vkFreeMemory(device,texMemory,nullptr);vkDestroyPipeline(device,pipeline,nullptr);vkDestroyPipeline(device,waterPipeline,nullptr);vkDestroyPipeline(device,skyPipeline,nullptr);vkDestroyPipelineLayout(device,pipelineLayout,nullptr);vkDestroyDescriptorSetLayout(device,descriptorLayout,nullptr);vkDestroyDevice(device,nullptr);vkDestroySurfaceKHR(instance,surface,nullptr);if(debugMessenger){auto fn=(PFN_vkDestroyDebugUtilsMessengerEXT)vkGetInstanceProcAddr(instance,"vkDestroyDebugUtilsMessengerEXT");if(fn)fn(instance,debugMessenger,nullptr);}vkDestroyInstance(instance,nullptr);}
 LRESULT CALLBACK saveNameProc(HWND h,UINT m,WPARAM w,LPARAM l){if(m==WM_KEYDOWN&&w==VK_RETURN){action(uiModal==5?52:31);return 0;}if(m==WM_KEYDOWN&&w==VK_ESCAPE){action(22);return 0;}return CallWindowProcW(saveNameOldProc,h,m,w,l);}
 void check(bool value,const char* name){log((std::string(value?"PASS: ":"FAIL: ")+name).c_str());if(!value)fail(name);}
-#include "menu_tests.inc"
-#include "audio_tests.inc"
-#include "saves_tests.inc"
-#include "building_tests.inc"
-#include "doors_tests.inc"
-#include "nature_tests.inc"
-#include "world_size_tests.inc"
-#include "water_tests.inc"
-#include "nature_special_tests.inc"
-#include "pipes_tests.inc"
-void selfTest(){starter();World initial=world;int count=0;for(auto c:world.c)if(c.t>=0)count++;check(count==129&&world.cables.empty()&&world.pipes.size()==5,"brutalist starter: 129 pieces, five pipes");save();world=World{};check(load(),"binary save reload");check(world.n==initial.n&&memcmp(world.c.data(),initial.c.data(),sizeof(Cell)*WorldCells)==0&&world.cables.size()==initial.cables.size()&&world.pipes.size()==initial.pipes.size(),"save roundtrip equality");remember();put(0,12,0,23,3);undo();check(memcmp(world.c.data(),initial.c.data(),sizeof(Cell)*WorldCells)==0,"undo restores cells");check(solidAt({2.5,.5,3.5}),"board-form floor collision");check(!solidAt({2.5,1.5,3.5}),"corridor airspace is open");put(1,0,2,-1);put(0,1,2,-1);put(1,1,2,-1);put(0,0,2,23);
- check(!solidAt({1.f,.4f,2.45f})&&solidAt({.12f,.4f,2.45f}),"doorway opening and jamb collision");
- check(!solidAt({1.f,.4f,2.45f})&&solidAt({1.88f,.4f,2.45f}),"doorway 2-wide opening and far jamb");
- check(solidAt({.12f,1.4f,2.45f})&&!solidAt({1.f,1.4f,2.45f}),"doorway upper jamb and opening");
- check(!solidAt({1.f,1.7f,2.45f})&&solidAt({1.f,1.9f,2.45f}),"doorway head clearance under lintel");
- check(freeAt({1.f,0,2.45f},1.6f),"doorway passable at standing height");
- check(solidAt({.12f,.4f,2.15f})&&solidAt({.12f,.4f,2.55f}),"doorway jamb has depth toward interior");
- check(!canPlace(0,1,2,0)&&!canPlace(1,0,2,0),"footprint blocks placing into doorway span");put(0,0,2,4);check(solidAt({.5,.2,2.2})&&!solidAt({.5,.9,2.8}),"slope collision");
- world=World{};put(0,0,0,56);put(0,1,0,-1);check(!solidAt({.5f,.5f,.5f})&&solidAt({.5f,1.8f,.5f}),"pilotis walk-under and capital");
- put(2,0,0,57);put(3,0,0,-1);check(solidAt({2.5f,.2f,.5f})&&solidAt({3.5f,.2f,.5f})&&!solidAt({2.5f,.7f,.5f}),"megastep 2-wide tread");
- put(2,0,2,58);for(int dx=0;dx<2;dx++)for(int dz=0;dz<2;dz++)for(int dy=0;dy<2;dy++)if(dx||dz||dy)put(2+dx,dy,2+dz,-1);
- check(solidAt({2.05f,.5f,2.5f})&&!solidAt({2.5f,.5f,2.5f}),"lightwell rim and open center");
- put(5,0,0,59);put(6,0,0,-1);put(5,1,0,-1);put(6,1,0,-1);
- check(solidAt({5.5f,.05f,.5f})&&!solidAt({5.5f,.8f,.5f})&&freeAt({5.5f,.12f,.5f},1.6f),"bridge tunnel fits standing player");
- put(8,0,0,60);put(8,1,0,-1);
- check(solidAt({8.1f,.5f,.5f})&&!solidAt({8.5f,.5f,.3f})&&freeAt({8.5f,0,.3f},1.6f),"tower core fits standing player");
- world=initial;for(int t=0;t<PieceCount;t++){vertices.clear();transparent.clear();origin={};turn=0;ghostMode=t==15;piece(t);ghostMode=false;check(vertices.size()+transparent.size()>0,(std::string("geometry: ")+names[t]).c_str());}dirty=true;}
-void ivySelfTest(){
- World preserved=world;V oldOrigin=origin;int oldTurn=turn;
- for(int rot=0;rot<4;rot++){
-  world=World{};turn=rot;V backing=transformNormal({0,0,1});for(int y=0;y<5;y++){put(3,y,3,15,rot);put(3-(int)backing.x,y,3-(int)backing.z,0);}
-  vertices.clear();transparent.clear();origin={3.5f,4.5f,3.5f};turn=rot;ivyBeginRefresh();ivyGrowth();
-  check(!vertices.empty(),"connected ivy emits geometry from upper edge");
-  size_t count=vertices.size();float low=100,high=-100;
-  uint64_t signature=1469598103934665603ull;
-  bool finite=true;for(auto v:vertices){finite=finite&&std::isfinite(v.p.x)&&std::isfinite(v.p.y)&&std::isfinite(v.p.z);low=std::min(low,v.p.y);high=std::max(high,v.p.y);uint32_t bits;memcpy(&bits,&v.p.x,4);signature=(signature^bits)*1099511628211ull;}
-  check(finite,"finite ivy vertices");check(high-low>3.4f,"vine stems continue across multiple cells");
-  vertices.clear();ivyBeginRefresh();ivyGrowth();uint64_t again=1469598103934665603ull;for(auto v:vertices){uint32_t bits;memcpy(&bits,&v.p.x,4);again=(again^bits)*1099511628211ull;}
-  check(vertices.size()==count&&signature==again,"ivy geometry is stable across refreshes");
-  vertices.clear();transparent.clear();origin={3.5f,2.5f,3.5f};ivyGrowth();check(vertices.empty()&&transparent.empty(),"middle cells do not restart horizontal ivy bands");
- }
- // Adjacent columns must be emitted as one component, with shared leaf spacing.
- world=World{};for(int x=3;x<=5;x++)for(int y=0;y<5;y++){put(x,y,3,15,0);put(x,y,2,0);}
- origin={3.5f,4.5f,3.5f};turn=0;vertices.clear();transparent.clear();ivyBeginRefresh();ivyGrowth();
- check(ivyGenerated[idx(5,0,3)],"ivy flood joins horizontal and vertical neighbors");
- check(ivyLeavesAccepted>0&&ivyLeavesSkipped>0,"neighbor ivy shares a leaf spacing budget");
- size_t before=vertices.size();origin={4.5f,3.5f,3.5f};ivyGrowth();check(vertices.size()==before,"neighbor cells do not duplicate patch geometry");
- bool sitesFinite=true;for(const auto& bin:ivyLeafBins)for(V site:bin)sitesFinite=sitesFinite&&std::isfinite(site.x)&&std::isfinite(site.y)&&std::isfinite(site.z);check(sitesFinite,"finite adaptive leaf sites");
- world=World{};put(3,2,3,0);
- for(int rot=0;rot<4;rot++){
-  turn=rot;V n=transformNormal({0,0,1});origin=V{3.5f,2.5f,3.5f}+n*2.f;
-  V attached=transform(ivyAttached({0,0,-.4f}));float outward=dot(attached-V{3.5f,2.5f,3.5f},n);
-  check(outward>.5f&&outward<.67f,"nearby ivy attaches to supporting wall in all rotations");
- }
- ivyBeginRefresh();check(ivyReserveLeaf({3,2,3},.1f),"first nearby leaf occupies its spacing site");check(!ivyReserveLeaf({3.025f,2,3},.1f),"nearby overlapping vine leaf is rejected");
- world=preserved;origin=oldOrigin;turn=oldTurn;vertices.clear();transparent.clear();ivyBeginRefresh();dirty=true;
-}
-#include "foliage_trace_tests.inc"
-#include "parity_tests.inc"
-#include "ui_tests.inc"
-#include "catalog_contract_tests.inc"
-#include "catalog_audit.inc"
+#include "../tests/regression.inc"
 int WINAPI wWinMain(HINSTANCE hi,HINSTANCE,PWSTR cmd,int){SetProcessDPIAware();std::wstring args=cmd;menuReviewImages=args.find(L"--menu-review-images")!=std::wstring::npos;doorReviewImages=args.find(L"--door-review-images")!=std::wstring::npos;reviewSession=args.find(L"--review-save=")!=std::wstring::npos;volumetrics=args.find(L"--no-volumetrics")==std::wstring::npos;auditRun=args.find(L"--catalog-audit")!=std::wstring::npos;audioTest=args.find(L"--audio-test")!=std::wstring::npos;verifyGlassBlur=std::wstring(cmd).find(L"--verify-blur")!=std::wstring::npos;benchmarkRun=args.find(L"--benchmark")!=std::wstring::npos;fixedFrame=args.find(L"--fixed-frame")!=std::wstring::npos;benchmarkStorm=args.find(L"--bench-storm")!=std::wstring::npos;benchmarkWalk=args.find(L"--bench-walk")!=std::wstring::npos;inspectVines=args.find(L"--inspect-vines")!=std::wstring::npos;capturePending=args.find(L"--capture")!=std::wstring::npos;if(capturePending||auditRun){wchar_t t[MAX_PATH];GetTempPathW(MAX_PATH,t);captureFile=std::wstring(t)+L"creating-constructs-vines.bmp";}smoke=args.find(L"--smoke-test")!=std::wstring::npos;validate=args.find(L"--validate")!=std::wstring::npos;wchar_t local[MAX_PATH];GetEnvironmentVariableW(L"LOCALAPPDATA",local,MAX_PATH);std::wstring dir=std::wstring(local)+L"\\CreatingConstructs";CreateDirectoryW(dir.c_str(),nullptr);{std::wstring legacy=std::wstring(local)+L"\\MonolithVulkan";auto copyIfMissing=[&](const wchar_t* name){std::wstring dst=dir+L"\\"+name,src=legacy+L"\\"+name;if(GetFileAttributesW(dst.c_str())==INVALID_FILE_ATTRIBUTES&&GetFileAttributesW(src.c_str())!=INVALID_FILE_ATTRIBUTES)CopyFileW(src.c_str(),dst.c_str(),TRUE);};if(!smoke){copyIfMissing(L"world.bin");copyIfMissing(L"audio.cfg");}}dataPath=dir+(reviewSession?L"\\review-world.bin":smoke?L"\\test-world.bin":L"\\world.bin");logPath=dir+(smoke?L"\\smoke.log":L"\\runtime.log");_wfopen_s(&logFile,logPath.c_str(),L"wb");log("Creating Constructs · native C++ / Vulkan");audioLoadSettings(dir);inputLoadSettings(dir);if(audioTest||(!smoke&&!benchmarkRun&&captureFile.empty())){if(!audioLoadBank())log("Audio bank could not be decoded");}if(args.find(L"--export-soundtracks")!=std::wstring::npos){exportMoodSoundtracks();if(logFile)fclose(logFile);return 0;}if(audioTest)audioSelfTest();if(!load())starter();savesDirectory=dir+(reviewSession?L"\\ReviewSaves":smoke?L"\\TestSaves":L"\\Saves");photosDirectory=dir+L"\\Photos";exportsDirectory=dir+L"\\Exports";CreateDirectoryW(savesDirectory.c_str(),nullptr);CreateDirectoryW(photosDirectory.c_str(),nullptr);CreateDirectoryW(exportsDirectory.c_str(),nullptr);if(!smoke){std::wstring legacySaves=std::wstring(local)+L"\\MonolithVulkan\\Saves";WIN32_FIND_DATAW fd;HANDLE h=FindFirstFileW((savesDirectory+L"\\*").c_str(),&fd);int own=0;if(h!=INVALID_HANDLE_VALUE){do{if(!(fd.dwFileAttributes&FILE_ATTRIBUTE_DIRECTORY))own++;}while(FindNextFileW(h,&fd));FindClose(h);}if(!own&&GetFileAttributesW(legacySaves.c_str())!=INVALID_FILE_ATTRIBUTES){h=FindFirstFileW((legacySaves+L"\\*").c_str(),&fd);if(h!=INVALID_HANDLE_VALUE){do{if(fd.dwFileAttributes&FILE_ATTRIBUTE_DIRECTORY)continue;CopyFileW((legacySaves+L"\\"+fd.cFileName).c_str(),(savesDirectory+L"\\"+fd.cFileName).c_str(),TRUE);}while(FindNextFileW(h,&fd));FindClose(h);}} }refreshNamedSaves();if(!smoke&&!audioTest&&!benchmarkRun&&captureFile.empty()&&saveEntries.empty())saveCurrentNamed(L"My first world");if(smoke){selfTest();buildingSelfTest();doorsSelfTest();ivySelfTest();catalogSelfTest();uiSelfTest();savesSelfTest();natureSelfTest();worldSizeSelfTest();waterSelfTest();natureSpecialSelfTest();pipesSelfTest();}target={world.n/2.f,2,world.n/2.f};
 if(inspectVines){target={7.6f,2.7f,1.1f};theta=.65f;phi=1.25f;distanceCam=6.3f;}
 if(args.find(L"--inspect-tower")!=std::wstring::npos){target={3.5f,6.0f,3.9f};theta=.78f;phi=1.12f;distanceCam=6.2f;}

@@ -1,7 +1,7 @@
 """Import curated 32×32 topography textures for rock/dirt/moss/gravel.
 
 Upsamples with Lanczos to 128×128 (smooth — avoids voxel stair-steps).
-Writes src/topo_textures.inc and patches Creating Constructs.html TOPO maps.
+Writes src/generated/topo_textures.inc and patches Creating Constructs.html TOPO maps.
 """
 from __future__ import annotations
 
@@ -13,7 +13,7 @@ from PIL import Image
 
 ROOT = Path(__file__).resolve().parents[1]
 SRC = Path(r"O:\Assets\Textures\8_topography")
-OUT_INC = ROOT / "src" / "topo_textures.inc"
+OUT_INC = ROOT / "src" / "generated/topo_textures.inc"
 OUT_DIR = ROOT / "assets" / "nature" / "topo"
 HTML = ROOT / "Creating Constructs.html"
 

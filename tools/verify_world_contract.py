@@ -5,7 +5,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 html = (ROOT / "Creating Constructs.html").read_text(encoding="utf-8", errors="replace")
-cat = (ROOT / "src" / "catalog.inc").read_text(encoding="utf-8")
+cat = (ROOT / "src" / "generated/catalog.inc").read_text(encoding="utf-8")
 doc = (ROOT / "docs" / "World-API.md").read_text(encoding="utf-8")
 
 tn = re.findall(r"'([^']+)'", re.search(r"TN=\[(.*?)\];", html, re.S).group(1))

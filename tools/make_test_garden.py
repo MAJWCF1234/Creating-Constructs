@@ -53,7 +53,7 @@ class Garden:
 # into their reserved pad, keeping the circulation lanes clear.
 g = Garden()
 g.floor(0, 64, 0, 64)
-catalog=(ROOT/'src/catalog.inc').read_text()
+catalog=(ROOT/'src/generated/catalog.inc').read_text()
 part_count=int(re.search(r'PieceCount=(\d+)',catalog).group(1))
 for part in range(part_count):
     for rotation in range(4):

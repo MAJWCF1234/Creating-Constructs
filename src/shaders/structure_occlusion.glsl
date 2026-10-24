@@ -4,7 +4,7 @@
 #define PART_SQRT sqrt
 #define PART_MAX max
 bool partSolidLocal(int type,vec3 f){
-#include "part_solidity.inc"
+#include "../world/solidity.inc"
 }
 #undef PART_ABS
 #undef PART_CEIL

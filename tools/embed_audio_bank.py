@@ -15,7 +15,7 @@ IDS = [
     "stepWater6", "stepSoft1", "stepSoft2", "stepSoft3", "stepSoft4",
 ]
 # SFX + ambience + Quiet Rooms (A_music). Skip retired Complex OST beds.
-# Procedural Noon/Golden/Blue scores are synthesized in-page from musicKey (mood_music.inc).
+# Procedural Noon/Golden/Blue scores are synthesized in-page from musicKey (src/audio/mixer.inc).
 KEEP = {i for i, n in enumerate(IDS) if n not in ("overcastComplex", "goldenComplex", "blueComplex")}
 
 

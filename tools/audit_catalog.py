@@ -15,7 +15,7 @@ if not args.summarize_only:
  log=Path.home()/'AppData/Local/CreatingConstructs/runtime.log'
  shutil.copy2(log,out/'runtime.log')
 cases=[json.loads(x) for x in (out/'cases.jsonl').read_text().splitlines()]
-piece_count=len(re.findall(r'"([^"]+)"',re.search(r'names\[\]=\{(.*?)\};',(R/'src/catalog.inc').read_text()).group(1)))
+piece_count=len(re.findall(r'"([^"]+)"',re.search(r'names\[\]=\{(.*?)\};',(R/'src/generated/catalog.inc').read_text()).group(1)))
 assert len(cases)==piece_count*4+197,'Incomplete visual audit'
 assert all(x['nonfinite']==0 and x['degenerate']==0 for x in cases),'Invalid mesh geometry'
 previews=out/'previews';previews.mkdir(exist_ok=True)

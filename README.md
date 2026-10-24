@@ -25,3 +25,5 @@ Requires Visual Studio Build Tools (cl) and the Vulkan SDK (`glslc`).
 ## World API
 
 [World generation and native runtime contract](docs/World-API.md): 104 parts, Share JSON, MON4/MNS4 saves, materials, viewpoints, animated doors, menu controls, and isolated QA launch flags.
+
+[Native source layout](docs/Source-Layout.md) explains the consolidated modules, generated data, shader stages, and build workflow.

@@ -58,7 +58,7 @@ with tempfile.TemporaryDirectory() as temp:
 pack=struct.pack('<II',0x3141554d,len(blobs))+b''.join(struct.pack('<I',len(x))+x for x in blobs)
 (OUT/'soundbank.bin').write_bytes(pack)
 (OUT/'manifest.json').write_text(json.dumps(manifest,indent=2))
-(ROOT/'src/audio_assets.h').write_text('enum AudioClipId { '+', '.join('A_'+c[0] for c in CLIPS)+', A_Count };\n')
+(ROOT/'src/generated/audio_assets.h').write_text('enum AudioClipId { '+', '.join('A_'+c[0] for c in CLIPS)+', A_Count };\n')
 print(f'Audio bank: {len(pack)} bytes; {len(blobs)} curated clips')
 
 # Movement has separate transient mastering; retain the approved first 17 clips.

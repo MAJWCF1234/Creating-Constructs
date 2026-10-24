@@ -1,4 +1,4 @@
-"""Import PSX nature meshes/textures into src/nature_*.inc."""
+"""Import PSX nature meshes/textures into src/generated/nature_*.inc."""
 from pathlib import Path
 import numpy as np, json, struct, io, hashlib
 from PIL import Image
@@ -256,7 +256,7 @@ for name, a in models:
     header.append("};")
     print(name, len(a) // 3, "triangles", np.round(a[:, :3].min(0), 2), np.round(a[:, :3].max(0), 2))
 
-(R / "src/nature_models.inc").write_text("\n".join(header), encoding="utf-8")
+(R / "src/generated/nature_models.inc").write_text("\n".join(header), encoding="utf-8")
 
 lines = ["// Imported foliage albedo and alpha."]
 for name, im, _ in textures:
@@ -278,7 +278,7 @@ lines.append(
     + ",".join("true" if b else "false" for b in bark_layers)
     + "};"
 )
-(R / "src/nature_textures.inc").write_text("\n".join(lines), encoding="utf-8")
+(R / "src/generated/nature_textures.inc").write_text("\n".join(lines), encoding="utf-8")
 
 manifest = [
     {"source": p, "sha256": hashlib.sha256(Path(p).read_bytes()).hexdigest()}

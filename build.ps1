@@ -8,13 +8,13 @@ $vs = & 'C:\Program Files (x86)\Microsoft Visual Studio\Installer\vswhere.exe' -
 New-Item -ItemType Directory -Force -Path build,Play | Out-Null
 $header = @()
 foreach ($shader in @('scene.vert','scene.frag','water.frag','sky.vert','sky.frag','post.vert','post.frag')) {
-    & "$sdk\Bin\glslc.exe" -O "src\$shader" -o "build\$shader.spv"
+    & "$sdk\Bin\glslc.exe" -O "src\shaders\$shader" -o "build\$shader.spv"
     if ($LASTEXITCODE -ne 0) { throw "Shader failed: $shader" }
     $bytes = [IO.File]::ReadAllBytes((Join-Path $PSScriptRoot "build\$shader.spv"))
     $name = $shader.Replace('.','_')
     $header += "alignas(4) const unsigned char $name[] = {" + (($bytes | ForEach-Object { $_.ToString() }) -join ',') + '};'
 }
-[IO.File]::WriteAllLines((Join-Path $PSScriptRoot 'src\shaders.h'),$header)
+[IO.File]::WriteAllLines((Join-Path $PSScriptRoot 'src\generated\shaders.h'),$header)
 if (!(Test-Path 'assets\audio\soundbank.bin')) {
     & py -3 tools\prepare_audio.py
     if ($LASTEXITCODE -ne 0) { throw 'Audio preparation failed' }

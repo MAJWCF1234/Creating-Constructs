@@ -1,11 +1,11 @@
-"""Sync src/catalog.inc from Creating Constructs.html TN + CATS arrays."""
+"""Sync src/generated/catalog.inc from Creating Constructs.html TN + CATS arrays."""
 from __future__ import annotations
 import re
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 HTML = ROOT / "Creating Constructs.html"
-OUT = ROOT / "src" / "catalog.inc"
+OUT = ROOT / "src" / "generated/catalog.inc"
 
 
 def main() -> None:

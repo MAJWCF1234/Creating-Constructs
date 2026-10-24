@@ -14,7 +14,7 @@
 #include <cstdlib>
 #include <unordered_set>
 #include <unordered_map>
-#include "shaders.h"
+#include "generated/shaders.h"
 
 constexpr int MaxPlot=64,WorldHeight=20,WorldCells=MaxPlot*MaxPlot*WorldHeight; // was 32; MON4 / MNS3 denser grid
 constexpr float PI=3.141592654f;
@@ -31,8 +31,7 @@ struct Viewpoint{wchar_t name[40]{};SavedView view{};};
 bool validSavedView(const SavedView& v);
 struct World{int n=10;std::array<Cell,WorldCells> c;std::vector<Cable> cables;std::vector<PipeNode> pipes;std::unordered_map<int,uint16_t> surfaces;std::vector<Viewpoint> viewpoints;std::unordered_map<int,uint8_t> doors;};
 World world;std::vector<World> history,redoStack;
-#include "door_state.inc"
-#include "surface_materials.inc"
+#include "world/state.inc"
 int idx(int x,int y,int z){return x*(MaxPlot*WorldHeight)+z*WorldHeight+y;} bool inb(int x,int y,int z){return x>=0&&z>=0&&y>=0&&x<world.n&&z<world.n&&y<20;}
 Cell get(int x,int y,int z){return inb(x,y,z)?world.c[idx(x,y,z)]:Cell{};}
 void put(int x,int y,int z,int t,int r=0){if(inb(x,y,z)){world.c[idx(x,y,z)]={(int8_t)t,(int8_t)r};world.surfaces.erase(idx(x,y,z));forgetDoor(idx(x,y,z));}}
@@ -82,8 +81,8 @@ const char* camSchemeLabel(){return camScheme==1?"Modifiers (Shift/Alt/Ctrl)":"C
 const char* camHelpText(){return camScheme==1?"Shift-drag orbit, Alt-drag pan, Ctrl-drag zoom; wheel zoom; middle-drag also pans":"Right-drag orbit, middle-drag pan, wheel zoom";}
 bool hit=false,hasAdd=false,hasRem=false;V hitAdd,hitRem,hitPoint,anchorA;bool pendingCable=false;
 HWND mainWindow,viewWindow,topPanel,sidePanel,dockPanel,modalPanel,shareEdit;int W=1280,H=800,vw=1056,vh=690;HFONT font,fontBold,fontTitle;HBRUSH bgBrush;
-#include "catalog.inc"
-#include "audio.inc"
+#include "generated/catalog.inc"
+#include "audio/mixer.inc"
 // Overcast / Noon / Golden hour / Blue hour / Concrete overcast — matched to HTML MOODS
 const V moodTop[]={{.557f,.580f,.596f},{.310f,.525f,.776f},{.373f,.478f,.651f},{.110f,.165f,.314f},{.416f,.439f,.455f}};
 const V moodHor[]={{.706f,.722f,.722f},{.749f,.831f,.894f},{.941f,.690f,.502f},{.498f,.561f,.690f},{.604f,.627f,.635f}};
@@ -104,7 +103,7 @@ bool load(){FILE* f=nullptr;_wfopen_s(&f,dataPath.c_str(),L"rb");if(!f)return fa
  if(ok)for(auto p:w.pipes)if(!validPipeNode(p,w.n))ok=false;
  if(ok)ok=readSurfaceChunk(f,w);fclose(f);if(ok){world=w;resetDoorMotion();}return ok;
 }
-#include "saves.inc"
+#include "world/saves.inc"
 void starter(){resetDoorMotion();world=World{};world.n=10;world.pipes.clear();
  // Brutalist L-corridor + wave-2 megastructure accents
  for(int z=1;z<=6;z++){for(int y=0;y<4;y++){put(1,y,z,47);put(4,y,z,47);}put(2,0,z,47);put(3,0,z,47);put(2,3,z,48,2);put(3,3,z,48,2);}
@@ -184,11 +183,8 @@ void stairHandrails(float xL,float xR,int steps,float xMid=-999.f){
  rail(xL);rail(xR);rail(xMid);
 }
 bool solidAt(V p);
-#include "ivy.inc"
-#include "shape_helpers.inc"
-#include "nature.inc"
-#include "nature_special.inc"
-#include "pipes.inc"
+#include "world/vegetation.inc"
+#include "world/pipes.inc"
 void waterSurface(){
  int x=(int)floorf(origin.x),y=(int)floorf(origin.y),z=(int)floorf(origin.z);bool above=get(x,y+1,z).t==40;float top=above?.5f:.35f;
  if(!above)quad({-.5f,top,.5f},{.5f,top,.5f},{.5f,top,-.5f},{-.5f,top,-.5f},9);
@@ -245,12 +241,11 @@ case 23: // 2×2 doorway — jambs deepened toward interior (-Z)
 case 25:box(.06,1,.06,-.25,0,-.44,3);box(.06,1,.06,.25,0,-.44,3);for(int i=0;i<4;i++)box(.5,.04,.04,0,-.4f+i*.25f,-.44,3);break;
 case 26:cylinder(.1,.6,-.2,3);cylinder(.09,.12,.17,4);break;
 case 27:box(.2,.08,.06,0,.3,-.46,3);box(.2,.08,.06,0,-.3,-.46,3);box(.04,.6,.04,0,0,-.46,3);box(.1,.5,.1,0,0,-.4,4);break;
-#include "modern_pieces.inc"
+#include "world/pieces.inc"
 }}
 
-#include "thumbnails.inc"
-#include "moss_nets.inc"
-#include "basins.inc"
+#include "render/thumbnails.inc"
+#include "world/landscape.inc"
 
 VkInstance instance;VkPhysicalDevice physical;VkDevice device;VkSurfaceKHR surface;VkQueue queue;uint32_t family;
 VkSwapchainKHR swapchain;VkFormat swapFormat;VkExtent2D extent;std::vector<VkImage> images;std::vector<VkImageView> views;std::vector<VkFramebuffer> framebuffers;
@@ -259,15 +254,15 @@ VkCommandPool commandPool;VkCommandBuffer command;VkSemaphore acquired,rendered;
 VkBuffer vertexBuffer,stateBuffer;VkDeviceMemory vertexMemory,stateMemory,depthMemory;void* vertexMap;void* stateMap;
 VkImage depthImage,msaaImage,texImage;VkImageView depthView,msaaView,texView;VkDeviceMemory msaaMemory,texMemory;VkSampler texSampler;
 VkSampleCountFlagBits samples=VK_SAMPLE_COUNT_1_BIT;bool rebuildSwap=false;uint32_t vertexCount=0,staticCount=0,waterVertexCount=0;const size_t maxVertexBytes=128*1024*1024;
-#include "texbake.inc"
+#include "render/textures.inc"
 VkDebugUtilsMessengerEXT debugMessenger;int validationErrors=0;std::string gpuName;
 VKAPI_ATTR VkBool32 VKAPI_CALL debugCallback(VkDebugUtilsMessageSeverityFlagBitsEXT severity,VkDebugUtilsMessageTypeFlagsEXT,const VkDebugUtilsMessengerCallbackDataEXT* data,void*){if(severity>=VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT){log(data->pMessage);if(severity>=VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT)validationErrors++;}return VK_FALSE;}
 uint32_t memoryType(uint32_t bits,VkMemoryPropertyFlags flags){VkPhysicalDeviceMemoryProperties p;vkGetPhysicalDeviceMemoryProperties(physical,&p);for(uint32_t i=0;i<p.memoryTypeCount;i++)if((bits&(1u<<i))&&(p.memoryTypes[i].propertyFlags&flags)==flags)return i;fail("No compatible Vulkan memory type");return 0;}
 void buffer(VkDeviceSize size,VkBufferUsageFlags usage,VkBuffer& b,VkDeviceMemory& memory,void** map){VkBufferCreateInfo ci{VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO};ci.size=size;ci.usage=usage;vkcheck(vkCreateBuffer(device,&ci,nullptr,&b),"Create buffer");VkMemoryRequirements req;vkGetBufferMemoryRequirements(device,b,&req);VkMemoryAllocateInfo ai{VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO};ai.allocationSize=req.size;ai.memoryTypeIndex=memoryType(req.memoryTypeBits,VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT|VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);vkcheck(vkAllocateMemory(device,&ai,nullptr,&memory),"Allocate buffer");vkcheck(vkBindBufferMemory(device,b,memory,0),"Bind buffer");vkcheck(vkMapMemory(device,memory,0,size,0,map),"Map buffer");}
-#include "foliage_trace.inc"
-#include "foliage_tex.inc"
-#include "topo_textures.inc"
-#include "brick_textures.inc"
+#include "render/foliage.inc"
+#include "generated/foliage_tex.inc"
+#include "generated/topo_textures.inc"
+#include "generated/brick_textures.inc"
 // BrickAtlasBase = 9+NatureTextureCount+TopoTextureCount; only BrickTop is uploaded there (side stays on legacy layer 3).
 constexpr int BrickAtlasBase=9+NatureTextureCount+TopoTextureCount;
 constexpr int BrickTopLayer=BrickAtlasBase; // single extra GPU layer — full pack stays in brick_textures.inc for tools
@@ -325,7 +320,7 @@ void uploadTextures(){
 }
 VkImageView imageView(VkImage im,VkFormat format,VkImageAspectFlags aspect){VkImageViewCreateInfo ci{VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO};ci.image=im;ci.viewType=VK_IMAGE_VIEW_TYPE_2D;ci.format=format;ci.subresourceRange={aspect,0,1,0,1};VkImageView v;vkcheck(vkCreateImageView(device,&ci,nullptr,&v),"Image view");return v;}
 VkShaderModule shader(const unsigned char* bytes,size_t size){VkShaderModuleCreateInfo ci{VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO};ci.codeSize=size;ci.pCode=reinterpret_cast<const uint32_t*>(bytes);VkShaderModule m;vkcheck(vkCreateShaderModule(device,&ci,nullptr,&m),"Shader module");return m;}
-#include "postpass.inc"
+#include "render/postprocess.inc"
 void destroySwap(){for(auto semaphore:presentReady)vkDestroySemaphore(device,semaphore,nullptr);presentReady.clear();for(auto f:framebuffers)vkDestroyFramebuffer(device,f,nullptr);framebuffers.clear();destroySceneTargets();for(auto v:views)vkDestroyImageView(device,v,nullptr);views.clear();if(swapchain)vkDestroySwapchainKHR(device,swapchain,nullptr);}
 void createSwap(){VkSurfaceCapabilitiesKHR cap;vkcheck(vkGetPhysicalDeviceSurfaceCapabilitiesKHR(physical,surface,&cap),"Surface capabilities");extent=cap.currentExtent;if(extent.width==UINT32_MAX)extent={(uint32_t)vw,(uint32_t)vh};
 VkSwapchainCreateInfoKHR ci{VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR};ci.surface=surface;ci.minImageCount=std::min(cap.maxImageCount?cap.maxImageCount:3u,std::max(2u,cap.minImageCount));ci.imageFormat=swapFormat;ci.imageColorSpace=VK_COLOR_SPACE_SRGB_NONLINEAR_KHR;ci.imageExtent=extent;ci.imageArrayLayers=1;ci.imageUsage=VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT|VK_IMAGE_USAGE_TRANSFER_SRC_BIT;ci.preTransform=cap.currentTransform;ci.compositeAlpha=VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR;ci.presentMode=VK_PRESENT_MODE_FIFO_KHR;ci.clipped=VK_FALSE;vkcheck(vkCreateSwapchainKHR(device,&ci,nullptr,&swapchain),"Create swapchain");uint32_t n=0;vkGetSwapchainImagesKHR(device,swapchain,&n,nullptr);images.resize(n);vkGetSwapchainImagesKHR(device,swapchain,&n,images.data());presentReady.resize(n);VkSemaphoreCreateInfo semaphoreInfo{VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO};for(auto& semaphore:presentReady)vkcheck(vkCreateSemaphore(device,&semaphoreInfo,nullptr,&semaphore),"Per-image present semaphore");for(auto im:images)views.push_back(imageView(im,swapFormat,VK_IMAGE_ASPECT_COLOR_BIT));
@@ -364,9 +359,7 @@ VkDescriptorBufferInfo bi{stateBuffer,0,sizeof(State)};VkDescriptorImageInfo ii{
 VkWriteDescriptorSet wr[2]{};wr[0].sType=wr[1].sType=VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;wr[0].dstSet=wr[1].dstSet=descriptorSet;wr[0].dstBinding=0;wr[0].descriptorCount=1;wr[0].descriptorType=VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;wr[0].pBufferInfo=&bi;wr[1].dstBinding=1;wr[1].descriptorCount=1;wr[1].descriptorType=VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;wr[1].pImageInfo=&ii;vkUpdateDescriptorSets(device,2,wr,0,nullptr);VkDescriptorBufferInfo fi{foliageBuffer,0,foliageCapacity};VkWriteDescriptorSet fw{VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET};fw.dstSet=descriptorSet;fw.dstBinding=2;fw.descriptorCount=1;fw.descriptorType=VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;fw.pBufferInfo=&fi;vkUpdateDescriptorSets(device,1,&fw,0,nullptr);
 VkCommandBufferAllocateInfo ca{VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO};ca.commandPool=commandPool;ca.level=VK_COMMAND_BUFFER_LEVEL_PRIMARY;ca.commandBufferCount=1;vkcheck(vkAllocateCommandBuffers(device,&ca,&command),"Command buffer");VkSemaphoreCreateInfo se{VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO};vkcheck(vkCreateSemaphore(device,&se,nullptr,&acquired),"Acquire semaphore");vkcheck(vkCreateSemaphore(device,&se,nullptr,&rendered),"Present semaphore");VkFenceCreateInfo fe{VK_STRUCTURE_TYPE_FENCE_CREATE_INFO};fe.flags=VK_FENCE_CREATE_SIGNALED_BIT;vkcheck(vkCreateFence(device,&fe,nullptr,&fence),"Render fence");createSwap();log("Vulkan renderer initialized");}
 
-#include "performance.inc"
-#include "readback.inc"
-#include "glass_readback.inc"
+#include "render/frame_support.inc"
 void refresh(){doorFramePass=true;doorRoots.clear();activeSurface=0;std::fill(std::begin(gpu.natureMask),std::end(gpu.natureMask),0u);bakeNatureMask=true;ivyBeginRefresh();vertices.clear();transparent.clear();grass.clear();pieces=0;origin={0,0,0};turn=0;ambient=1;
 // HTML: 400x400 ground at y=-.01 color #777977, plot N×N at y=0 color #cfcdc5
 box(400,.02,400,world.n*.5f,-.02f,world.n*.5f,11);
@@ -406,13 +399,13 @@ for(int x=0;x<world.n;x++)for(int z=0;z<world.n;z++)for(int y=0;y<20;y++){
 origin={};turn=0;ambient=1;renderPipes();vertices.insert(vertices.end(),transparent.begin(),transparent.end());transparent.clear();
 std::vector<Vertex> waterVertices;size_t kept=0;for(size_t i=0;i+2<vertices.size();i+=3){if(vertices[i].m==9)waterVertices.insert(waterVertices.end(),vertices.begin()+i,vertices.begin()+i+3);else for(int j=0;j<3;j++)vertices[kept++]=vertices[i+j];}vertices.resize(kept);waterVertexCount=(uint32_t)waterVertices.size();vertices.insert(vertices.end(),waterVertices.begin(),waterVertices.end());
 doorFramePass=false;buildFoliageTrace();staticCount=(uint32_t)vertices.size();if(vertices.size()*sizeof(Vertex)>maxVertexBytes-1024*1024)fail("Geometry capacity exceeded");memcpy(vertexMap,vertices.data(),vertices.size()*sizeof(Vertex));dirty=false;if(topPanel)InvalidateRect(topPanel,nullptr,FALSE);if(dockPanel)InvalidateRect(dockPanel,nullptr,FALSE);}
-#include "export_obj.inc"
+#include "world/export.inc"
 #define PART_ABS fabsf
 #define PART_CEIL ceilf
 #define PART_SQRT sqrtf
 #define PART_MAX std::max
 bool partSolidLocal(int type,V f){
-#include "part_solidity.inc"
+#include "world/solidity.inc"
 }
 #undef PART_ABS
 #undef PART_CEIL
@@ -466,10 +459,10 @@ void autoFacing(int& t,int& r){
 void edit(){if(!hit)return;bool remove=wantErase();if(selected==16){V a=anchor();if(remove){int best=-1;float bd=1.3;for(int i=0;i<(int)world.cables.size();i++){float d=std::min(len(world.cables[i].a-a),len(world.cables[i].b-a));if(d<bd){bd=d;best=i;}}if(best>=0){world.cables.erase(world.cables.begin()+best);audioEdit(true,16,a);dirty=true;save();}}else if(!pendingCable){anchorA=a;pendingCable=true;audioEvent(A_click);}else{if(len(a-anchorA)>.4&&world.cables.size()<2048){world.cables.push_back({anchorA,a});audioEdit(false,16,a);dirty=true;save();}pendingCable=false;}return;}
 if(isPipeTool(selected)){pipeEdit();return;}
 if(remove&&hasRem){audioEdit(true,get((int)hitRem.x,(int)hitRem.y,(int)hitRem.z).t,hitRem+V{.5f,.5f,.5f});int ax=(int)hitRem.x,ay=(int)hitRem.y,az=(int)hitRem.z;auto gone=get(ax,ay,az);world.pipes.erase(std::remove_if(world.pipes.begin(),world.pipes.end(),[&](const PipeNode& p){return footprintCovers(ax,ay,az,gone.t,gone.r,p.cx,p.cy,p.cz);}),world.pipes.end());put(ax,ay,az,-1);dirty=true;save();}else if(!remove&&hasAdd){int t=selected,r=rotation;autoFacing(t,r);int ax=(int)hitAdd.x,ay=(int)hitAdd.y,az=(int)hitAdd.z;if(canPlace(ax,ay,az,t,r)){audioEdit(false,t,hitAdd+V{.5f,.5f,.5f});put(ax,ay,az,t,r);if(surfaceRecipe())world.surfaces[idx(ax,ay,az)]=(uint16_t)surfaceRecipe();placed[idx(ax,ay,az)]=true;lastPlaced=t;dirty=true;save();}}}
-#include "placement_preview.inc"
+#include "render/placement.inc"
 void toggleWalk(){walk=!walk;pendingCable=false;drag=false;camDrag=0;ReleaseCapture();if(walk){player=hasNamedWalkSpawn&&freeAt(namedWalkSpawn,1.6f)?namedWalkSpawn:V{world.n/2.f,0,world.n+1.8f};velY=hx=hz=wallRun=camRoll=0;yaw=pitch=0;grounded=true;spaceHeld=false;}InvalidateRect(mainWindow,nullptr,FALSE);}
 void raisePanels();
-#include "doors.inc"
+#include "world/doors.inc"
 void dynamicGeometry(float time){activeSurface=0;vertices.clear();transparent.clear();origin={};turn=0;ambient=1;
 renderDoorLeaves();
 float wd=(rain?2.f:1.f)*(wind?1.85f:1.f);
@@ -540,4 +533,4 @@ performanceMark(1);VkRenderPassBeginInfo pp{VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_
 vkCmdBeginRenderPass(command,&pp,VK_SUBPASS_CONTENTS_INLINE);vkCmdSetViewport(command,0,1,&vp);vkCmdSetScissor(command,0,1,&sc);vkCmdBindPipeline(command,VK_PIPELINE_BIND_POINT_GRAPHICS,postPipeline);vkCmdBindDescriptorSets(command,VK_PIPELINE_BIND_POINT_GRAPHICS,postPipeLayout,0,1,&postDescSet,0,nullptr);vkCmdDraw(command,3,1,0,0);vkCmdEndRenderPass(command);
 performanceMark(2);recordUiBackground(index);recordReadback(index);performanceMark(3);vkcheck(vkEndCommandBuffer(command),"End frame");VkPipelineStageFlags wait=VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;VkSubmitInfo submit{VK_STRUCTURE_TYPE_SUBMIT_INFO};submit.waitSemaphoreCount=1;submit.pWaitSemaphores=&acquired;submit.pWaitDstStageMask=&wait;submit.commandBufferCount=1;submit.pCommandBuffers=&command;submit.signalSemaphoreCount=1;submit.pSignalSemaphores=&presentReady[index];vkcheck(vkQueueSubmit(queue,1,&submit,fence),"Submit frame");VkPresentInfoKHR present{VK_STRUCTURE_TYPE_PRESENT_INFO_KHR};present.waitSemaphoreCount=1;present.pWaitSemaphores=&presentReady[index];present.swapchainCount=1;present.pSwapchains=&swapchain;present.pImageIndices=&index;r=vkQueuePresentKHR(queue,&present);if(r==VK_ERROR_OUT_OF_DATE_KHR||r==VK_SUBOPTIMAL_KHR)rebuildSwap=true;else vkcheck(r,"Present frame");vkcheck(vkWaitForFences(device,1,&fence,VK_TRUE,UINT64_MAX),"Wait for render resources");finishReadback();double blurStart=benchmarkRun?perfClock():0;finishUiBackground();if(benchmarkRun)perfBlurMs=perfClock()-blurStart;performanceSample();frames++;}
 
-#include "platform.inc"
+#include "platform/windows.inc"

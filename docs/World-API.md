@@ -6,7 +6,7 @@
 
 This document is the full contract for writing worlds from code: Share JSON, named saves (`.mns`), autosave (`world.bin`), cell keys, piece IDs, cables, and face-mounted pipes.
 
-Use it to build savers, procedural generators, level converters, and batch tools that the HTML sandbox and the native Vulkan app can load. Keep piece names in sync with `tools/sync_catalog.py` (HTML `TN` → `src/catalog.inc`).
+Use it to build savers, procedural generators, level converters, and batch tools that the HTML sandbox and the native Vulkan app can load. Keep piece names in sync with `tools/sync_catalog.py` (HTML `TN` → `src/generated/catalog.inc`).
 
 ---
 
@@ -174,7 +174,7 @@ def to_share(N: int, cells: dict, cables=(), pipes=(), stride: int = STRIDE) -> 
 
 ## 4. Piece catalog (`t`)
 
-Canonical names live in `src/catalog.inc` / HTML `TN` (keep them in sync via `tools/sync_catalog.py`). Current **`PieceCount = 104`**. GPU cell encoding uses **`PieceEncodingStride = 128`** (`1 + t + stride * r`).
+Canonical names live in `src/generated/catalog.inc` / HTML `TN` (keep them in sync via `tools/sync_catalog.py`). Current **`PieceCount = 104`**. GPU cell encoding uses **`PieceEncodingStride = 128`** (`1 + t + stride * r`).
 
 | ID | Name | Notes |
 |----|------|--------|
@@ -351,7 +351,7 @@ Outward normals (`PIPE_N`):
 | 4 | +Z | North face |
 | 5 | −Z | South face |
 
-Tangent bases (`PIPE_U`, `PIPE_V`) match HTML and `src/pipes.inc`. Slot center:
+Tangent bases (`PIPE_U`, `PIPE_V`) match HTML and `src/world/pipes.inc`. Slot center:
 
 ```
 origin = (cx+0.5, cy+0.5, cz+0.5)
@@ -703,19 +703,19 @@ Invalid `.mns` / `world.bin` files are rejected without clobbering the open worl
 
 | Topic | File |
 |-------|------|
-| Piece names / counts | `src/catalog.inc`, HTML `TN` |
+| Piece names / counts | `src/generated/catalog.inc`, HTML `TN` |
 | Sync catalog from HTML | `tools/sync_catalog.py` |
 | Catalog audit | `tools/audit_catalog.py` (`--catalog-audit`) |
-| JSON export/import (native) | `src/platform.inc` (`exportWorldJson`, `loadWorldJson`) |
+| JSON export/import (native) | `src/platform/windows.inc` (`exportWorldJson`, `loadWorldJson`) |
 | Autosave R/W | `src/main.cpp` (`save`, `load`) |
-| Named saves | `src/saves.inc` |
-| Mesh export | `src/export_obj.inc` |
-| Native surfaces / extension chunks | `src/surface_materials.inc` |
-| Service-door targets / animation | `src/door_state.inc`, `src/doors.inc` |
-| Main menu / input routing | `src/glass_panels.inc`, `src/platform.inc`, `src/gamepad.inc` |
-| Menu integration checks | `src/menu_tests.inc` |
-| Pipe math | `src/pipes.inc`, HTML pipe block |
-| Footprints / collision | `src/main.cpp`, `src/part_solidity.inc` |
+| Named saves | `src/world/saves.inc` |
+| Mesh export | `src/world/export.inc` |
+| Native surfaces / extension chunks | `src/world/state.inc` |
+| Service-door targets / animation | `src/world/state.inc`, `src/world/doors.inc` |
+| Main menu / input routing | `src/platform/ui.inc`, `src/platform/windows.inc`, `src/platform/windows.inc` |
+| Menu integration checks | `src/tests/regression.inc` |
+| Pipe math | `src/world/pipes.inc`, HTML pipe block |
+| Footprints / collision | `src/main.cpp`, `src/world/solidity.inc` |
 | Tool notes | `tools/README.md` |
 | Sample worlds | `worlds/*.json`, `Saves/*.mns` |
 
